@@ -1,0 +1,15 @@
+*.zip
+out/
+output/
+pa4.pdf
+
+.*.sw[p-z]
+.DS_Store
+
+.idea
+*.iml
+
+tmp/
+
+report.*
+!report.tex
