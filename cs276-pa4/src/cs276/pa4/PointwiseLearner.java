@@ -1,6 +1,7 @@
 package cs276.pa4;
 
 import cs276.pa4.doc.DocField;
+import cs276.pa4.doc.TermFreqExtractor;
 import cs276.pa4.util.MapUtility;
 import cs276.pa4.util.Pair;
 import weka.classifiers.Classifier;
@@ -12,8 +13,6 @@ import weka.core.Instances;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import cs276.pa4.doc.TermFreqExtractor;
 
 import static cs276.pa4.Util.loadRelData;
 import static cs276.pa4.Util.loadTrainData;
@@ -187,15 +186,9 @@ public class PointwiseLearner extends Learner {
 
             /* Sort documents */
             Collections.sort(scores, (p1, p2) -> {
-                double s1 = p1.getSecond();
-                double s2 = p2.getSecond();
-                if (s1 < s2) {
-                    return 1;
-                } else if (s1 > s2) {
-                    return -1;
-                } else {
-                    return 0;
-                }
+                Double s1 = p1.getSecond();
+                Double s2 = p2.getSecond();
+                return -s1.compareTo(s2);
             });
 
             /* Put it into rankedQueries */
