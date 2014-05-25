@@ -1,5 +1,6 @@
 *.zip
-out/
+/cs276-pa4/out/
+/cs276-pa4/bin/
 output/
 pa4.pdf
 

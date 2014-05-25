@@ -4,15 +4,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Util {
-    public static Map<Query, List<Document>> loadTrainData(String feature_file_name) throws Exception {
-        Map<Query, List<Document>> result = new HashMap<Query, List<Document>>();
-
+    public static Map<Query, Map<String, Document>> loadTrainData(String feature_file_name) throws Exception {
         File feature_file = new File(feature_file_name);
         if (!feature_file.exists()) {
             System.err.println("Invalid feature file name: " + feature_file_name);
@@ -20,64 +19,60 @@ public class Util {
         }
 
         BufferedReader reader = new BufferedReader(new FileReader(feature_file));
-        String line = null, anchor_text = null;
-        Query query = null;
-        Document doc = null;
-        int numQuery = 0;
-        int numDoc = 0;
+        String line = null, url= null, anchor_text = null;
+        Query currentQuery = null;
+        Map<String, Document> currentDocuments = null;
+        Document currentDocument = null;
+
+        /* feature dictionary: Query -> (url -> Document)  */
+        Map<Query, Map<String, Document>> queryDict = new HashMap<>();
+
         while ((line = reader.readLine()) != null) {
             String[] tokens = line.split(":", 2);
             String key = tokens[0].trim();
             String value = tokens[1].trim();
 
             if (key.equals("query")) {
-                query = new Query(value);
-                numQuery++;
-                result.put(query, new ArrayList<Document>());
+                currentQuery = new Query(value.trim());
+                currentDocuments = new HashMap<>();
+                queryDict.put(currentQuery, currentDocuments);
             } else if (key.equals("url")) {
-                doc = new Document();
-                doc.url = new String(value);
-                result.get(query).add(doc);
-                numDoc++;
+                url = value.trim();
+                currentDocument = new Document(url);
+                currentDocuments.put(url, currentDocument);
             } else if (key.equals("title")) {
-                doc.title = new String(value);
+                currentDocument.setTitle(value);
             } else if (key.equals("header")) {
-                if (doc.headers == null)
-                    doc.headers = new ArrayList<String>();
-                doc.headers.add(value);
+                currentDocument.addHeader(value);
             } else if (key.equals("body_hits")) {
-                if (doc.body_hits == null)
-                    doc.body_hits = new HashMap<String, List<Integer>>();
                 String[] temp = value.split(" ", 2);
                 String term = temp[0].trim();
-                List<Integer> positions_int;
+                List<Integer> positions = Arrays.asList(temp[1].trim().split(" "))
+                        .stream()
+                        .map(pos -> Integer.parseInt(pos))
+                        .collect(Collectors.toList());
 
-                if (!doc.body_hits.containsKey(term)) {
-                    positions_int = new ArrayList<Integer>();
-                    doc.body_hits.put(term, positions_int);
-                } else
-                    positions_int = doc.body_hits.get(term);
-
-                String[] positions = temp[1].trim().split(" ");
-                for (String position : positions)
-                    positions_int.add(Integer.parseInt(position));
-
-            } else if (key.equals("body_length"))
-                doc.body_length = Integer.parseInt(value);
-            else if (key.equals("pagerank"))
-                doc.page_rank = Integer.parseInt(value);
-            else if (key.equals("anchor_text")) {
-                anchor_text = value;
-                if (doc.anchors == null)
-                    doc.anchors = new HashMap<String, Integer>();
-            } else if (key.equals("stanford_anchor_count"))
-                doc.anchors.put(anchor_text, Integer.parseInt(value));
+                currentDocument.addBodyHits(term, positions);
+            } else if (key.equals("body_length")) {
+                currentDocument.setBodyLength(Integer.parseInt(value));
+            } else if (key.equals("pagerank")) {
+                currentDocument.setPageRank(Integer.parseInt(value));
+            } else if (key.equals("anchor_text")) {
+                anchor_text = value.trim();
+            } else if (key.equals("stanford_anchor_count")) {
+                currentDocument.addAnchor(anchor_text, Integer.parseInt(value));
+            }
         }
 
-        reader.close();
-        System.err.println("# Signal file " + feature_file_name + ": number of queries=" + numQuery + ", number of documents=" + numDoc);
+        // finish build documents
+        queryDict.values()
+                .stream()
+                .flatMap(ds -> ds.values().stream())
+                .forEach(d -> d.end());
 
-        return result;
+        reader.close();
+
+        return queryDict;
     }
 
     public static Map<String, Double> loadDFs(String dfFile) throws IOException {

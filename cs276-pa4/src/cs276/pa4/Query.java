@@ -1,31 +1,50 @@
 package cs276.pa4;
 
+import cs276.pa4.doc.FieldProcessor;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class Query implements Comparable<Query> {
-    String query;
-    List<String> words; /* Words with no duplicates and all lower case */
+public class Query {
+    private String originalQuery;
+    private List<String> queryWords;
 
     public Query(String query) {
-        this.query = new String(query);
-        String[] words_array = query.toLowerCase().split(" ");
-
-
-        // Use LinkedHashSet to remove duplicates
-        words_array = (new LinkedHashSet<String>(Arrays.asList(words_array))).toArray(new String[0]);
-        words = new ArrayList<String>(Arrays.asList(words_array));
+        originalQuery = query;
+        // remove duplicates (why use LinkedHashSet?)
+        queryWords = new ArrayList<>(new LinkedHashSet<>(FieldProcessor.splitField(query)));
     }
 
-    @Override
-    public int compareTo(Query arg0) {
-        return this.query.compareTo(arg0.query);
+    public List<String> getQueryWords() {
+        return queryWords;
+    }
+
+    public String getOriginalQuery() {
+        return originalQuery;
     }
 
     @Override
     public String toString() {
-        return query;
+        return "Query<" + originalQuery + ">";
+    }
+
+    @Override
+    public int hashCode() {
+        return originalQuery.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj == null || !(obj instanceof Query)) {
+            return false;
+        }
+
+        Query another = (Query)obj;
+        return this.originalQuery.equals(another.originalQuery);
     }
 }
