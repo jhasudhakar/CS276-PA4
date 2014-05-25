@@ -2,11 +2,15 @@ package cs276.pa4;
 
 import weka.core.Instances;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class TestFeatures {
 
-	/* This is just a sample class to store the result */
+    public TestFeatures() {
+        this.features = null;
+        this.index_map = new HashMap<>();
+    }
 
     /* Test features */
     Instances features;
