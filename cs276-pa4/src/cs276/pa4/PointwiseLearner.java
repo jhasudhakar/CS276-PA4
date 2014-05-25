@@ -1,13 +1,9 @@
 package cs276.pa4;
 
-import cs276.pa4.doc.DocField;
-import cs276.pa4.doc.TermFreqExtractor;
-import cs276.pa4.util.MapUtility;
 import cs276.pa4.util.Pair;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LinearRegression;
 import weka.core.Attribute;
-import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -45,34 +41,8 @@ public class PointwiseLearner extends Learner {
             Map<String, Document> docs = entry.getValue();
             for (String url : docs.keySet()) {
                 Document doc = docs.get(url);
-                /* Get term frequencies */
-                Map<DocField, Map<String, Double>> tfs = new HashMap<>();
-                for (DocField docField : DocField.values()) {
-                    TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
-                    Map<String, Double> tf = MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q));
-                    tfs.put(docField, tf);
-
-                }
-                /* Get query frequencies */
-                Map<String, Double> tfQuery = new HashMap<>();
-                Map<String, Integer> counts = MapUtility.count(q.getQueryWords());
-                for (Map.Entry<String, Integer> et : counts.entrySet()) {
-                    String term = et.getKey();
-                    if (idfs.containsKey(term)) {
-                        tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
-                    } else {
-                        tfQuery.put(term, 0.0);
-                    }
-                }
-                /* Add data */
-                double[] instance = new double[6];
-                instance[0] = dotProduct(tfQuery, tfs.get(DocField.url));
-                instance[1] = dotProduct(tfQuery, tfs.get(DocField.title));
-                instance[2] = dotProduct(tfQuery, tfs.get(DocField.body));
-                instance[3] = dotProduct(tfQuery, tfs.get(DocField.header));
-                instance[4] = dotProduct(tfQuery, tfs.get(DocField.anchor));
-                instance[5] = relData.get(q.getOriginalQuery()).get(url);
-                Instance inst = new DenseInstance(1.0, instance);
+                double score = relData.get(q.getOriginalQuery()).get(url);
+                Instance inst = createInstance(q, doc, score, idfs);
                 dataset.add(inst);
             }
         }
@@ -123,33 +93,7 @@ public class PointwiseLearner extends Learner {
             for (String url : docs.keySet()) {
                 Document doc = docs.get(url);
                 /* Get term frequencies */
-                Map<DocField, Map<String, Double>> tfs = new HashMap<>();
-                for (DocField docField : DocField.values()) {
-                    TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
-                    Map<String, Double> tf = MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q));
-                    tfs.put(docField, tf);
-
-                }
-                /* Get query frequencies */
-                Map<String, Double> tfQuery = new HashMap<>();
-                Map<String, Integer> counts = MapUtility.count(q.getQueryWords());
-                for (Map.Entry<String, Integer> et : counts.entrySet()) {
-                    String term = et.getKey();
-                    if (idfs.containsKey(term)) {
-                        tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
-                    } else {
-                        tfQuery.put(term, 0.0);
-                    }
-                }
-                /* Add data */
-                double[] instance = new double[6];
-                instance[0] = dotProduct(tfQuery, tfs.get(DocField.url));
-                instance[1] = dotProduct(tfQuery, tfs.get(DocField.title));
-                instance[2] = dotProduct(tfQuery, tfs.get(DocField.body));
-                instance[3] = dotProduct(tfQuery, tfs.get(DocField.header));
-                instance[4] = dotProduct(tfQuery, tfs.get(DocField.anchor));
-                instance[5] = 0;
-                Instance inst = new DenseInstance(1.0, instance);
+                Instance inst = createInstance(q, doc, 0, idfs);
                 testFeatures.features.add(inst);
                 testFeatures.index_map.get(q.getOriginalQuery()).put(url, index);
                 index++;
@@ -199,31 +143,4 @@ public class PointwiseLearner extends Learner {
         return rankedQueries;
     }
 
-    /**
-     * Optimized dot product.
-     * @param sv small vector
-     * @param lv large vector
-     * @return
-     */
-    private static double optimizedDotProduct(Map<String, Double> sv, Map<String, Double> lv) {
-        return sv.entrySet()
-                .stream()
-                .mapToDouble(ev -> ev.getValue() * MapUtility.getWithFallback(lv, ev.getKey(), 0.0))
-                .sum();
-    }
-
-    /**
-     * Compute dot product of two sparse vectors.
-     * @param v1 sparse vector
-     * @param v2 sparse vector
-     * @return
-     */
-    private static double dotProduct(Map<String, Double> v1, Map<String, Double> v2) {
-        // make sure v1 is smaller so that minimal computation is needed
-        if (v1.size() > v2.size()) {
-            return optimizedDotProduct(v2, v1);
-        } else {
-            return optimizedDotProduct(v1, v2);
-        }
-    }
 }
