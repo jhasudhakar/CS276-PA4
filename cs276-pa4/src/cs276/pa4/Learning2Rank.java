@@ -53,7 +53,7 @@ public class Learning2Rank {
         if (task == 1) {
             learner = new PointwiseLearner();
         } else if (task == 2) {
-            learner = new LinearSVMLearner();
+            learner = new LinearSVMLearner(true);
         } else if (task == 3) {
 				
 				/* 

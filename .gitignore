@@ -10,6 +10,9 @@ pa4.pdf
 .idea
 *.iml
 
+# serialized file
+*.ser
+
 tmp/
 
 report.*

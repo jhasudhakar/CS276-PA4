@@ -1,11 +1,11 @@
 package cs276.pa4;
 
 import cs276.pa4.util.Pair;
+import cs276.pa4.util.SerializationHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LibSVM;
 import weka.core.*;
 import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.NumericToNominal;
 import weka.filters.unsupervised.attribute.Standardize;
 
 import java.util.ArrayList;
@@ -16,12 +16,19 @@ import java.util.Map;
 public class LinearSVMLearner extends LinearLearner {
     private static int POS_INDEX = 0;
     private static int NEG_INDEX = 1;
+    private static String standardizeFile = "linear-svm-standarize.ser";
 
-    private NumericToNominal numericToNominal;
+    private Standardize standardize;
 
     public LinearSVMLearner() {
-        // convert first column to nominal value
-        numericToNominal = new NumericToNominal();
+        this(false);
+    }
+
+    public LinearSVMLearner(boolean testing) {
+        if (testing) {
+            // load Standardize from disk
+            standardize = (Standardize) SerializationHelper.loadObjectFromFile(standardizeFile);
+        }
     }
 
     @Override
@@ -50,15 +57,22 @@ public class LinearSVMLearner extends LinearLearner {
         svm.setKernelType(new SelectedTag(LibSVM.KERNELTYPE_LINEAR, LibSVM.TAGS_KERNELTYPE));
         svm.setShrinking(false);
 
+        // filter dataset
         try {
-            numericToNominal.setOptions(new String[]{"-R", "first"});
-            numericToNominal.setInputFormat(dataset);
-            dataset = Filter.useFilter(dataset, numericToNominal);
-
-            Standardize standardize = new Standardize();
+            standardize = new Standardize();
             standardize.setInputFormat(dataset);
             dataset = Filter.useFilter(dataset, standardize);
 
+            // save standardize to file
+            if (!SerializationHelper.saveObjectToFile(standardize, standardizeFile)) {
+                throw new Exception("cannot serialize standardize!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // train classifier
+        try {
             svm.buildClassifier(dataset);
         } catch (Exception e) {
             e.printStackTrace();
@@ -140,12 +154,27 @@ public class LinearSVMLearner extends LinearLearner {
         double[] fs2 = inst2.toDoubleArray();
         double[] fsDiff = getFSDiff(fs1, fs2);
         Instance newInst = new DenseInstance(1.0, fsDiff);
+
         // add new instance to all instances to avoid UnassignedDatasetException
+        allInstances.add(newInst);
+
+        // standardize the new instance
+        try {
+            if (standardize.input(allInstances.lastInstance())) {
+                newInst = standardize.output();
+            } else {
+                throw new Exception("Cannot standardize instance!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // add standardized instance (the API sucks...)
         allInstances.add(newInst);
 
         int ret = 0;
         try {
-            double labelIdx = model.classifyInstance(allInstances.instance(allInstances.numInstances()-1));
+            double labelIdx = model.classifyInstance(allInstances.lastInstance());
             // index 0 -> +1 -> larger -> use -1 to rank higher
             ret = labelIdx == 0.0 ? -1 : 1;
         } catch (Exception e) {
