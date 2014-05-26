@@ -4,6 +4,7 @@ import cs276.pa4.util.Pair;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LinearRegression;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -42,7 +43,7 @@ public class PointwiseLearner extends Learner {
             for (String url : docs.keySet()) {
                 Document doc = docs.get(url);
                 double score = relData.get(q.getOriginalQuery()).get(url);
-                Instance inst = createInstance(q, doc, score, idfs);
+                Instance inst = new DenseInstance(1.0, extractTfidfFeatures(q, doc, score, idfs));
                 dataset.add(inst);
             }
         }
@@ -67,7 +68,6 @@ public class PointwiseLearner extends Learner {
     @Override
     public TestFeatures extract_test_features(String test_data_file,
                                               Map<String, Double> idfs) {
-        int index = 0;
         TestFeatures testFeatures = new TestFeatures();
 
 		/* Build attributes list */
@@ -86,18 +86,22 @@ public class PointwiseLearner extends Learner {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        int index = 0;
         for (Map.Entry<Query, Map<String, Document>> entry : testData.entrySet()) {
             Query q = entry.getKey();
-            testFeatures.index_map.put(q.getOriginalQuery(), new HashMap<>());
             Map<String, Document> docs = entry.getValue();
+
+            Map<String, Integer> indices = new HashMap<>();
             for (String url : docs.keySet()) {
                 Document doc = docs.get(url);
                 /* Get term frequencies */
-                Instance inst = createInstance(q, doc, 0, idfs);
+                Instance inst = new DenseInstance(1.0, extractTfidfFeatures(q, doc, 0, idfs));
                 testFeatures.features.add(inst);
-                testFeatures.index_map.get(q.getOriginalQuery()).put(url, index);
-                index++;
+                indices.put(url, index++);
             }
+
+            testFeatures.index_map.put(q.getOriginalQuery(), indices);
         }
 
         testFeatures.features.setClassIndex(testFeatures.features.numAttributes() - 1);
@@ -136,7 +140,10 @@ public class PointwiseLearner extends Learner {
             });
 
             /* Put it into rankedQueries */
-            List<String> rankings = scores.stream().map(Pair<String, Double>::getFirst).collect(Collectors.toList());
+            List<String> rankings = scores
+                    .stream()
+                    .map(Pair<String, Double>::getFirst)
+                    .collect(Collectors.toList());
             rankedQueries.put(query, rankings);
         }
 

@@ -45,7 +45,7 @@ public abstract class Learner {
     /* Construct training features matrix */
     public abstract Instances extract_train_features(String train_data_file, String train_rel_file, Map<String, Double> idfs) throws Exception;
 
-    protected Instance createInstance(Query q, Document doc, double score, Map<String, Double> idfs) {
+    protected double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
     /* Get term frequencies */
         Map<DocField, Map<String, Double>> tfs = new HashMap<>();
         for (DocField docField : DocField.values()) {
@@ -73,7 +73,7 @@ public abstract class Learner {
         instance[3] = dotProduct(tfQuery, tfs.get(DocField.header));
         instance[4] = dotProduct(tfQuery, tfs.get(DocField.anchor));
         instance[5] = score;
-        return new DenseInstance(1.0, instance);
+        return instance;
     }
 
     /* Train the model */
