@@ -92,6 +92,8 @@ public class LinearSVMLearner extends LinearLearner {
 
         Map<String, Integer> indices = new HashMap<>();
         int L = docFeatures.size();
+        // randomly select half of all pairs
+        // assume entries in docs are randomized
         for (int i = 0; i < L; ++i) {
             for (int j = i + 1; j < L; ++j) {
                 if (i == j) {
@@ -138,13 +140,14 @@ public class LinearSVMLearner extends LinearLearner {
         double[] fs2 = inst2.toDoubleArray();
         double[] fsDiff = getFSDiff(fs1, fs2);
         Instance newInst = new DenseInstance(1.0, fsDiff);
+        // add new instance to all instances to avoid UnassignedDatasetException
         allInstances.add(newInst);
 
         int ret = 0;
         try {
-            // TODO: something's wrong here
-            double res = model.classifyInstance(allInstances.instance(allInstances.numInstances()-1));
-            ret = res == 0.0 ? 0 : (res > 0 ? -1 : 1);
+            double labelIdx = model.classifyInstance(allInstances.instance(allInstances.numInstances()-1));
+            // index 0 -> +1 -> larger -> use -1 to rank higher
+            ret = labelIdx == 0.0 ? -1 : 1;
         } catch (Exception e) {
             e.printStackTrace();
         }
