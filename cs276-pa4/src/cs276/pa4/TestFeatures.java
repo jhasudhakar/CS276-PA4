@@ -9,7 +9,7 @@ public class TestFeatures {
 
     public TestFeatures() {
         this.features = null;
-        this.index_map = new HashMap<>();
+        this.indexMap = new HashMap<>();
     }
 
     /* Test features */
@@ -19,7 +19,7 @@ public class TestFeatures {
      * {query -> {doc -> index}}
      *
      * For example, you can get the feature for a pair of (query, url) using:
-     *   features.get(index_map.get(query).get(url));
+     *   features.get(indexMap.get(query).get(url));
      * */
-    Map<String, Map<String, Integer>> index_map;
+    Map<String, Map<String, Integer>> indexMap;
 }

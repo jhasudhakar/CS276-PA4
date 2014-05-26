@@ -39,10 +39,10 @@ public class Learning2Rank {
         }
  		
 		/* Step (1): construct your feature matrix here */
-        Instances data = learner.extract_train_features(train_data_file, train_rel_file, idfs);
+        Instances data = learner.extractTrainFeatures(train_data_file, train_rel_file, idfs);
 		
 		/* Step (2): implement your learning algorithm here */
-        model = learner.training(data);
+        model = learner.train(data);
 
         return model;
     }
@@ -73,10 +73,10 @@ public class Learning2Rank {
         }
 		 
 	 		/* Step (1): construct your test feature matrix here */
-        TestFeatures tf = learner.extract_test_features(test_data_file, idfs);
+        TestFeatures tf = learner.extractTestFeatures(test_data_file, idfs);
 	 		
 	 		/* Step (2): implement your prediction and ranking code here */
-        ranked_queries = learner.testing(tf, model);
+        ranked_queries = learner.test(tf, model);
 
         return ranked_queries;
     }
