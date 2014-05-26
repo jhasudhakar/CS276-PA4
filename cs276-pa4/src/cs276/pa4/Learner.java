@@ -1,11 +1,16 @@
 package cs276.pa4;
 
+import cs276.pa4.doc.DocField;
+import cs276.pa4.doc.TermFreqExtractor;
 import cs276.pa4.util.MapUtility;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.Instances;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static cs276.pa4.Util.loadRelData;
 import static cs276.pa4.Util.loadTrainData;
@@ -116,5 +121,39 @@ public abstract class Learner {
         } else {
             return optimizedDotProduct(v1, v2);
         }
+    }
+
+    protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
+        // get term frequencies
+        Map<DocField, Map<String, Double>> tfs = new HashMap<>();
+        for (DocField docField : DocField.values()) {
+            TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
+            Map<String, Double> tf = MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q));
+            tfs.put(docField, tf);
+
+        }
+
+        // get query frequencies
+        Map<String, Double> tfQuery = new HashMap<>();
+        Map<String, Integer> counts = MapUtility.count(q.getQueryWords());
+        for (Map.Entry<String, Integer> et : counts.entrySet()) {
+            String term = et.getKey();
+            if (idfs.containsKey(term)) {
+                tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
+            } else {
+                tfQuery.put(term, 0.0);
+            }
+        }
+
+        // add data
+        double[] instance = new double[6];
+        instance[0] = score;
+        instance[1] = dotProduct(tfQuery, tfs.get(DocField.url));
+        instance[2] = dotProduct(tfQuery, tfs.get(DocField.title));
+        instance[3] = dotProduct(tfQuery, tfs.get(DocField.body));
+        instance[4] = dotProduct(tfQuery, tfs.get(DocField.header));
+        instance[5] = dotProduct(tfQuery, tfs.get(DocField.anchor));
+
+        return instance;
     }
 }

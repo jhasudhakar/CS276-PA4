@@ -22,18 +22,9 @@
 
 package weka.classifiers.functions;
 
-import weka.classifiers.Classifier;
+import libsvm.svm_model;
 import weka.classifiers.RandomizableClassifier;
-import weka.core.Capabilities;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.Option;
-import weka.core.RevisionUtils;
-import weka.core.SelectedTag;
-import weka.core.Tag;
-import weka.core.TechnicalInformation;
-import weka.core.TechnicalInformationHandler;
-import weka.core.Utils;
+import weka.core.*;
 import weka.core.Capabilities.Capability;
 import weka.core.TechnicalInformation.Type;
 import weka.filters.Filter;
@@ -45,13 +36,10 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
-
-import libsvm.svm_model;
 
 /*
  * Modifications by FracPete:
