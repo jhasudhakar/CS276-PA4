@@ -22,12 +22,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner();
         } else if (task == 3) {
-
-			/* 
-			 * @TODO: Your code here, add more features 
-			 * */
-            System.err.println("Task 3");
-
+            learner = new NonLinearSVMLearner();
         } else if (task == 4) {
 			
 			/* 
@@ -55,12 +50,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner(true);
         } else if (task == 3) {
-				
-				/* 
-				 * @TODO: Your code here, add more features 
-				 * */
-            System.err.println("Task 3");
-
+            learner = new NonLinearSVMLearner(true);
         } else if (task == 4) {
 				
 				/* 

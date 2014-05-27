@@ -5,9 +5,12 @@ import cs276.pa4.util.SerializationHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LibSVM;
 import weka.core.*;
+import weka.core.converters.LibSVMSaver;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Standardize;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +19,8 @@ import java.util.Map;
 public class LinearSVMLearner extends LinearLearner {
     private static int POS_INDEX = 0;
     private static int NEG_INDEX = 1;
-    private static String standardizeFile = "linear-svm-standarize.ser";
+    private boolean saveDataset = false;
+    private static String standardizeFile = "svm-standarize.ser";
 
     private Standardize standardize;
 
@@ -51,11 +55,7 @@ public class LinearSVMLearner extends LinearLearner {
 
     @Override
     public Classifier train(Instances dataset) {
-        LibSVM svm = new LibSVM();
-        // svm.setCost(C);
-        // svm.setGamma(gamma); // only matter for RBF kernel
-        svm.setKernelType(new SelectedTag(LibSVM.KERNELTYPE_LINEAR, LibSVM.TAGS_KERNELTYPE));
-        svm.setShrinking(false);
+        LibSVM svm = getSVM();
 
         // filter dataset
         try {
@@ -78,6 +78,29 @@ public class LinearSVMLearner extends LinearLearner {
             e.printStackTrace();
         }
 
+        if (saveDataset) {
+            // save dataset to file for parameter tuning with libsvm tools
+            // Note: should save dataset after training LibSVM (otherwise will
+            //       cause problems. Don't know why.)
+            LibSVMSaver saver = new LibSVMSaver();
+            saver.setClassIndex("first");
+            saver.setInstances(dataset);
+            try {
+                saver.setFile(new File("train.libsvm"));
+                saver.writeBatch();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return svm;
+    }
+
+    protected LibSVM getSVM() {
+        LibSVM svm = new LibSVM();
+        svm.setCost(1);
+        svm.setKernelType(new SelectedTag(LibSVM.KERNELTYPE_LINEAR, LibSVM.TAGS_KERNELTYPE));
+        svm.setShrinking(false);
         return svm;
     }
 
