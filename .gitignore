@@ -17,3 +17,9 @@ tmp/
 
 report.*
 !report.tex
+
+# weka source
+dev-3-7-11/
+
+# libsvm data file
+*.libsvm

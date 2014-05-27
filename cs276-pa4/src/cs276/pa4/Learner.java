@@ -16,6 +16,8 @@ import static cs276.pa4.Util.loadRelData;
 import static cs276.pa4.Util.loadTrainData;
 
 public abstract class Learner {
+    private static double SMOOTH_BODY_LENGTH = 500;
+
     /* Construct training features matrix */
     public Instances extractTrainFeatures(String trainDataFile, String trainRelFile, Map<String, Double> idfs) {
         TestFeatures testFeatures = extractFeatures("train-dataset", trainDataFile, trainRelFile, idfs);
@@ -127,12 +129,27 @@ public abstract class Learner {
         return MapUtility.iMap(vals, val -> val == 0.0 ? 0.0 : 1 + Math.log(val));
     }
 
+    private static Map<String, Double> normalizeTF(Map<String, Double> tf, Document d) {
+        return sublinear(tf);
+    }
+
+    /**
+     * Normalize by body length.
+     * @param termFreqs
+     * @param d
+     * @return
+     */
+    private static Map<String, Double> lengthNormalize(Map<String, Double> termFreqs, Document d) {
+        double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
+        return MapUtility.iMap(termFreqs, f -> f / smoothedBodyLength);
+    }
+
     protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
         // get term frequencies
         Map<DocField, Map<String, Double>> tfs = new HashMap<>();
         for (DocField docField : DocField.values()) {
             TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
-            Map<String, Double> tf = sublinear(MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q)));
+            Map<String, Double> tf = normalizeTF(MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q)), doc);
             tfs.put(docField, tf);
         }
 

@@ -19,7 +19,8 @@ import java.util.Map;
 public class LinearSVMLearner extends LinearLearner {
     private static int POS_INDEX = 0;
     private static int NEG_INDEX = 1;
-    private boolean saveDataset = false;
+    private boolean saveDataset = true;
+    int counter = 1; // use counter to equally distribute instances
     private static String standardizeFile = "svm-standarize.ser";
 
     private Standardize standardize;
@@ -129,8 +130,6 @@ public class LinearSVMLearner extends LinearLearner {
 
         Map<String, Integer> indices = new HashMap<>();
         int L = docFeatures.size();
-        // randomly select half of all pairs
-        // assume entries in docs are randomized
         for (int i = 0; i < L; ++i) {
             for (int j = i + 1; j < L; ++j) {
                 if (i == j) {
@@ -148,6 +147,12 @@ public class LinearSVMLearner extends LinearLearner {
                 }
 
                 double[] diffFS = getFSDiff(fs1, fs2);
+                if (counter % 2 == 1 && diffFS[0] != POS_INDEX) {
+                    flip(diffFS);
+                } else if (counter % 2 == 0 && diffFS[0] != NEG_INDEX) {
+                    flip(diffFS);
+                }
+                counter++;
 
                 features.add(new DenseInstance(1.0, diffFS));
                 indices.put(url1 + "|" + url2, index++);
@@ -157,6 +162,14 @@ public class LinearSVMLearner extends LinearLearner {
         indexMap.put(query, indices);
 
         return index;
+    }
+
+    private void flip(double[] diffFS) {
+        diffFS[0] = 1.0 - diffFS[0];
+        int S = diffFS.length;
+        for (int k = 1; k < S; ++k) {
+            diffFS[k] = -diffFS[k];
+        }
     }
 
     private double[] getFSDiff(double[] fs1, double[] fs2) {
