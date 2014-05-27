@@ -123,14 +123,17 @@ public abstract class Learner {
         }
     }
 
+    private static Map<String, Double> sublinear(Map<String, Double> vals) {
+        return MapUtility.iMap(vals, val -> val == 0.0 ? 0.0 : 1 + Math.log(val));
+    }
+
     protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
         // get term frequencies
         Map<DocField, Map<String, Double>> tfs = new HashMap<>();
         for (DocField docField : DocField.values()) {
             TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
-            Map<String, Double> tf = MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q));
+            Map<String, Double> tf = sublinear(MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q)));
             tfs.put(docField, tf);
-
         }
 
         // get query frequencies

@@ -100,7 +100,7 @@ public class LinearSVMLearner extends LinearLearner {
         LibSVM svm = new LibSVM();
         svm.setCost(1);
         svm.setKernelType(new SelectedTag(LibSVM.KERNELTYPE_LINEAR, LibSVM.TAGS_KERNELTYPE));
-        svm.setShrinking(false);
+        svm.setShrinking(false); // contributes a little speed-up (seem doesn't alter output value)
         return svm;
     }
 
