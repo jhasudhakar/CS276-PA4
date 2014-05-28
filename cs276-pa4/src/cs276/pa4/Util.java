@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Util {
-    private static double N = 98998;
+    public static double NDocs = 98998;
     public static Map<Query, Map<String, Document>> loadTrainData(String feature_file_name) {
         File feature_file = new File(feature_file_name);
         if (!feature_file.exists()) {
@@ -87,7 +87,7 @@ public class Util {
             line = line.trim();
             if (line.equals("")) continue;
             String[] tokens = line.split("\\s+");
-            dfs.put(tokens[0], Math.log((N+1) / (Double.parseDouble(tokens[1]) + 1)));
+            dfs.put(tokens[0], Math.log((NDocs+1) / (Double.parseDouble(tokens[1]) + 1)));
         }
         br.close();
         return dfs;

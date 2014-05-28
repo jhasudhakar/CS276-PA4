@@ -12,14 +12,14 @@ import weka.filters.unsupervised.attribute.Standardize;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class LinearSVMLearner extends LinearLearner {
     private static int POS_INDEX = 0;
     private static int NEG_INDEX = 1;
-    private boolean saveDataset = true;
+    private boolean saveDataset = false;
     int counter = 1; // use counter to equally distribute instances
     private static String standardizeFile = "svm-standarize.ser";
 
@@ -58,20 +58,6 @@ public class LinearSVMLearner extends LinearLearner {
     public Classifier train(Instances dataset) {
         LibSVM svm = getSVM();
 
-        // filter dataset
-        try {
-            standardize = new Standardize();
-            standardize.setInputFormat(dataset);
-            dataset = Filter.useFilter(dataset, standardize);
-
-            // save standardize to file
-            if (!SerializationHelper.saveObjectToFile(standardize, standardizeFile)) {
-                throw new Exception("cannot serialize standardize!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         // train classifier
         try {
             svm.buildClassifier(dataset);
@@ -97,6 +83,44 @@ public class LinearSVMLearner extends LinearLearner {
         return svm;
     }
 
+    // also trains and saves the standardizer
+    private Instances standardizeInstances(Instances dataset) {
+        try {
+            standardize = new Standardize();
+            standardize.setInputFormat(dataset);
+            dataset = Filter.useFilter(dataset, standardize);
+
+            // save standardize to file
+            if (!SerializationHelper.saveObjectToFile(standardize, standardizeFile)) {
+                throw new Exception("cannot serialize standardize!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return dataset;
+    }
+
+    private Instance standardizeInstance(Instance inst, Instances dataset) {
+        // temporarily add instance to the dataset to avoid UnassignedDatasetException
+        dataset.add(inst);
+
+        // standardize the new instance
+        try {
+            if (standardize.input(dataset.lastInstance())) {
+                inst = standardize.output();
+            } else {
+                throw new Exception("Cannot standardize instance!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // remove the temporarily added instance
+        dataset.remove(dataset.numInstances() - 1);
+
+        return inst;
+    }
+
     protected LibSVM getSVM() {
         LibSVM svm = new LibSVM();
         svm.setCost(1);
@@ -106,62 +130,61 @@ public class LinearSVMLearner extends LinearLearner {
     }
 
     @Override
-    protected int extractFeaturesFromDocs(Instances features, Query q, Map<String, Document> docs,
-                                          Map<String, Double> idfs, Map<String, Map<String, Double>> rels,
-                                          Map<String, Map<String, Integer>> indexMap, int index) {
-        if (rels == null) {
-            // for testing, extract TF-IDF features directly
-            return super.extractFeaturesFromDocs(features, q, docs, idfs, rels, indexMap, index);
+    protected TestFeatures extractFeatures(String datasetName, String dataFile, String relFile, Map<String, Double> idfs) {
+        TestFeatures testFeatures = super.extractFeatures(datasetName, dataFile, relFile, idfs);
+        if (relFile == null) {
+            // when testing, extract document features direclty
+            return testFeatures;
         }
 
-        // for training, extract pairwise features
+        // when training, stndardize doc features and generate pair features
+        // train standardizer
+        Instances features = standardizeInstances(testFeatures.features);
 
-        String query = q.getOriginalQuery();
+        Instances pairFeatures = new Instances(datasetName+"2", getAttributes(), 0);
+        pairFeatures.setClassIndex(0);
 
-        List<Pair<String, double[]>> docFeatures = new ArrayList<>();
-        for (Map.Entry<String, Document> entry : docs.entrySet()) {
-            String url = entry.getKey();
-            Document doc = entry.getValue();
+        for (Map<String, Integer> docSet : testFeatures.indexMap.values()) {
+            List<Pair<String, Instance>> docIndices = docSet.entrySet()
+                    .stream()
+                    .map(et -> new Pair<>(et.getKey(), features.instance(et.getValue())))
+                    .collect(Collectors.toList());
 
-            double relScore = rels.get(query).get(url);
-            double[] docFS = extractTfidfFeatures(q, doc, relScore, idfs);
-            docFeatures.add(new Pair<>(url, docFS));
-        }
+            int L = docIndices.size();
 
-        Map<String, Integer> indices = new HashMap<>();
-        int L = docFeatures.size();
-        for (int i = 0; i < L; ++i) {
-            for (int j = i + 1; j < L; ++j) {
-                if (i == j) {
-                    continue;
+            for (int i = 0; i < L; ++i) {
+                for (int j = i + 1; j < L; ++j) {
+                    if (i == j) {
+                        continue;
+                    }
+
+                    double[] fs1 = docIndices.get(i).getSecond().toDoubleArray();
+                    double[] fs2 = docIndices.get(j).getSecond().toDoubleArray();
+
+                    if (fs1[0] == fs2[0]) {
+                        // ignore pairs with the same weight
+                        continue;
+                    }
+
+                    double[] diffFS = getFSDiff(fs1, fs2);
+                    // make sure the class have evenly distributed examples
+                    if (counter % 2 == 1 && diffFS[0] != POS_INDEX) {
+                        flip(diffFS);
+                    } else if (counter % 2 == 0 && diffFS[0] != NEG_INDEX) {
+                        flip(diffFS);
+                    }
+                    counter++;
+
+                    pairFeatures.add(new DenseInstance(1.0, diffFS));
                 }
-
-                String url1 = docFeatures.get(i).getFirst();
-                String url2 = docFeatures.get(j).getFirst();
-                double[] fs1 = docFeatures.get(i).getSecond();
-                double[] fs2 = docFeatures.get(j).getSecond();
-
-                if (fs1[0] == fs2[0]) {
-                    // ignore pairs with the same weight
-                    continue;
-                }
-
-                double[] diffFS = getFSDiff(fs1, fs2);
-                if (counter % 2 == 1 && diffFS[0] != POS_INDEX) {
-                    flip(diffFS);
-                } else if (counter % 2 == 0 && diffFS[0] != NEG_INDEX) {
-                    flip(diffFS);
-                }
-                counter++;
-
-                features.add(new DenseInstance(1.0, diffFS));
-                indices.put(url1 + "|" + url2, index++);
             }
         }
 
-        indexMap.put(query, indices);
+        TestFeatures tf = new TestFeatures();
+        tf.features = pairFeatures;
+        tf.indexMap = null; // don't need it
 
-        return index;
+        return tf;
     }
 
     private void flip(double[] diffFS) {
@@ -186,25 +209,11 @@ public class LinearSVMLearner extends LinearLearner {
 
     @Override
     protected int compareInstances(Classifier model, Instance inst1, Instance inst2, Instances allInstances) {
-        double[] fs1 = inst1.toDoubleArray();
-        double[] fs2 = inst2.toDoubleArray();
+        double[] fs1 = standardizeInstance(inst1, allInstances).toDoubleArray();
+        double[] fs2 = standardizeInstance(inst2, allInstances).toDoubleArray();
+
         double[] fsDiff = getFSDiff(fs1, fs2);
         Instance newInst = new DenseInstance(1.0, fsDiff);
-
-        // add new instance to all instances to avoid UnassignedDatasetException
-        allInstances.add(newInst);
-
-        // standardize the new instance
-        try {
-            if (standardize.input(allInstances.lastInstance())) {
-                newInst = standardize.output();
-            } else {
-                throw new Exception("Cannot standardize instance!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         // add standardized instance (the API sucks...)
         allInstances.add(newInst);
 

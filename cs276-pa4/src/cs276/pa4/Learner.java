@@ -16,7 +16,7 @@ import static cs276.pa4.Util.loadRelData;
 import static cs276.pa4.Util.loadTrainData;
 
 public abstract class Learner {
-    private static double SMOOTH_BODY_LENGTH = 500;
+    private static double SMOOTH_BODY_LENGTH = 900;
 
     /* Construct training features matrix */
     public Instances extractTrainFeatures(String trainDataFile, String trainRelFile, Map<String, Double> idfs) {
@@ -130,7 +130,10 @@ public abstract class Learner {
     }
 
     private static Map<String, Double> normalizeTF(Map<String, Double> tf, Document d) {
-        return sublinear(tf);
+//        return sublinear(tf);
+//        return lengthNormalize(tf, d);
+        return lengthNormalize(sublinear(tf), d);
+//        return tf;
     }
 
     /**
@@ -161,7 +164,7 @@ public abstract class Learner {
             if (idfs.containsKey(term)) {
                 tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
             } else {
-                tfQuery.put(term, 0.0);
+                tfQuery.put(term, Math.log(Util.NDocs));
             }
         }
 
