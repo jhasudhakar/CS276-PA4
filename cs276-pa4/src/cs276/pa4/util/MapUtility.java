@@ -1,8 +1,6 @@
 package cs276.pa4.util;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.UnaryOperator;
 
 /**
@@ -15,12 +13,43 @@ public class MapUtility {
     public static <T> void incrementCount(T key, Map<T, Integer> counts) {
         Integer count = counts.get(key);
         int val = count == null ? ZERO : count;
-        counts.put(key, val+1);
+        counts.put(key, val + 1);
+    }
+
+    public static <T> void incrementCount(T key, Integer amount, Map<T, Integer> counts) {
+        Integer count = counts.get(key);
+        int val = count == null ? ZERO : count;
+        counts.put(key, val + amount);
     }
 
     public static <T, V> V getWithFallback(Map<T, V> map, T key, V defval) {
         V res = map.get(key);
         return res == null ? defval : res;
+    }
+
+    public static <K, V> List<Pair<K, V>> toPairs(Map<K,V> map) {
+        return entryMap(map, new UnaryFunction<Map.Entry<K, V>, Pair<K, V>>() {
+            @Override
+            public Pair<K, V> apply(Map.Entry<K, V> et) {
+                return new Pair<K, V>(et.getKey(), et.getValue());
+            }
+        });
+    }
+
+    /**
+     * Apply op on each map entry.
+     * @param map
+     * @param op
+     * @return
+     */
+    public static <K, V, T> List<T> entryMap(Map<K, V> map, UnaryFunction<Map.Entry<K, V>, T> op) {
+        List<T> result = new ArrayList<T>();
+
+        for (Map.Entry<K, V> et : map.entrySet()) {
+            result.add(op.apply(et));
+        }
+
+        return result;
     }
 
     /**

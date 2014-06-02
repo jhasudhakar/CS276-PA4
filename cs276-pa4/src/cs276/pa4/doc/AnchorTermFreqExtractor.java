@@ -3,10 +3,7 @@ package cs276.pa4.doc;
 import cs276.pa4.Document;
 import cs276.pa4.util.MapUtility;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * Created by kavinyao on 5/9/14.
@@ -20,14 +17,19 @@ public class AnchorTermFreqExtractor extends TermFreqExtractor {
             return Collections.emptyMap();
         }
 
-        return anchors.entrySet()
-                .stream()
-                .map(et -> {
-                    List<String> tokens = FieldProcessor.splitField(et.getKey());
-                    return MapUtility.magnify(termFreqsFromField(tokens), et.getValue());
-                })
-                .flatMap(m -> m.entrySet().stream())
-                .collect(Collectors.groupingBy(Map.Entry::getKey,
-                         Collectors.summingInt(Map.Entry::getValue)));
+        List<Map<String, Integer>> termFreqsMaps = new ArrayList<Map<String, Integer>>();
+        for (Map.Entry<String, Integer> et : anchors.entrySet()) {
+            List<String> tokens = FieldProcessor.splitField(et.getKey());
+            termFreqsMaps.add(MapUtility.magnify(termFreqsFromField(tokens), et.getValue()));
+        }
+
+        Map<String, Integer> termFreqCounts = new HashMap<String, Integer>();
+        for (Map<String, Integer> termFreqsMap : termFreqsMaps) {
+            for (Map.Entry<String, Integer> et : termFreqsMap.entrySet()) {
+                MapUtility.incrementCount(et.getKey(), et.getValue(), termFreqCounts);
+            }
+        }
+
+        return termFreqCounts;
     }
 }
