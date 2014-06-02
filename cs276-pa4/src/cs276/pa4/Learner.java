@@ -3,6 +3,7 @@ package cs276.pa4;
 import cs276.pa4.doc.DocField;
 import cs276.pa4.doc.TermFreqExtractor;
 import cs276.pa4.util.MapUtility;
+import cs276.pa4.util.UnaryFunction;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.Instances;
@@ -128,7 +129,12 @@ public abstract class Learner {
     }
 
     private static Map<String, Double> sublinear(Map<String, Double> vals) {
-        return MapUtility.iMap(vals, val -> val == 0.0 ? 0.0 : 1 + Math.log(val));
+        return MapUtility.iMap(vals, new UnaryFunction<Double, Double>() {
+            @Override
+            public Double apply(Double val) {
+                return val == 0.0 ? 0.0 : 1 + Math.log(val);
+            }
+        });
     }
 
     private static Map<String, Double> normalizeTF(Map<String, Double> tf, Document d) {
@@ -146,7 +152,12 @@ public abstract class Learner {
      */
     private static Map<String, Double> lengthNormalize(Map<String, Double> termFreqs, Document d) {
         double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
-        return MapUtility.iMap(termFreqs, f -> f / smoothedBodyLength);
+        return MapUtility.iMap(termFreqs, new UnaryFunction<Double, Double>() {
+            @Override
+            public Double apply(Double f) {
+                return f / smoothedBodyLength;
+            }
+        });
     }
 
     protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {

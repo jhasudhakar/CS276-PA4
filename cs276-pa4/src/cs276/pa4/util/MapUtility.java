@@ -1,7 +1,6 @@
 package cs276.pa4.util;
 
 import java.util.*;
-import java.util.function.UnaryOperator;
 
 /**
  * Created by kavinyao on 4/27/14.
@@ -71,7 +70,7 @@ public class MapUtility {
     /**
      * Apply op on each element in map.
      */
-    public static <K, V> Map<K, V> map(Map<K, V> map, UnaryOperator<V> op) {
+    public static <K, V> Map<K, V> map(Map<K, V> map, UnaryFunction<V, V> op) {
         Map<K, V> newMap = new HashMap<>(map);
         iMap(newMap, op);
         return newMap;
@@ -80,7 +79,7 @@ public class MapUtility {
     /**
      * Apply op on each element in map in place.
      */
-    public static <K, V> Map<K, V> iMap(Map<K, V> map, UnaryOperator<V> op) {
+    public static <K, V> Map<K, V> iMap(Map<K, V> map, UnaryFunction<V, V> op) {
         for (Map.Entry<K, V> e : map.entrySet()) {
             e.setValue(op.apply(e.getValue()));
         }
