@@ -1,11 +1,16 @@
 package cs276.pa4;
 
-import java.io.*;
+import cs276.pa4.util.ListUtility;
+import cs276.pa4.util.UnaryFunction;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Util {
     public static double NDocs = 98998;
@@ -46,10 +51,14 @@ public class Util {
                 } else if (key.equals("body_hits")) {
                     String[] temp = value.split(" ", 2);
                     String term = temp[0].trim();
-                    List<Integer> positions = Arrays.asList(temp[1].trim().split(" "))
-                            .stream()
-                            .map(pos -> Integer.parseInt(pos))
-                            .collect(Collectors.toList());
+                    List<Integer> positions = ListUtility.map(Arrays.asList(temp[1].trim().split(" ")),
+                            new UnaryFunction<String, Integer>() {
+                                @Override
+                                public Integer apply(String pos) {
+                                    return Integer.parseInt(pos);
+                                }
+                            }
+                    );
 
                     currentDocument.addBodyHits(term, positions);
                 } else if (key.equals("body_length")) {
@@ -63,11 +72,12 @@ public class Util {
                 }
             }
 
-            // finish build documents
-            queryDict.values()
-                    .stream()
-                    .flatMap(ds -> ds.values().stream())
-                    .forEach(d -> d.end());
+            // send finish signals to documents
+            for (Map<String, Document> ds : queryDict.values()) {
+                for (Document doc : ds.values()) {
+                    doc.end();
+                }
+            }
 
             reader.close();
         } catch (Exception e) {

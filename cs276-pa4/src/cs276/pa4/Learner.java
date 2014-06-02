@@ -3,6 +3,7 @@ package cs276.pa4;
 import cs276.pa4.doc.DocField;
 import cs276.pa4.doc.TermFreqExtractor;
 import cs276.pa4.util.MapUtility;
+import cs276.pa4.util.UnaryFunction;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.Instances;
@@ -104,10 +105,12 @@ public abstract class Learner {
      * @return
      */
     protected static double optimizedDotProduct(Map<String, Double> sv, Map<String, Double> lv) {
-        return sv.entrySet()
-                .stream()
-                .mapToDouble(ev -> ev.getValue() * MapUtility.getWithFallback(lv, ev.getKey(), 0.0))
-                .sum();
+        double sum = 0.0;
+        for (Map.Entry<String, Double> et : sv.entrySet()) {
+            sum += et.getValue() * MapUtility.getWithFallback(lv, et.getKey(), 0.0);
+        }
+
+        return sum;
     }
 
     /**
@@ -126,7 +129,12 @@ public abstract class Learner {
     }
 
     private static Map<String, Double> sublinear(Map<String, Double> vals) {
-        return MapUtility.iMap(vals, val -> val == 0.0 ? 0.0 : 1 + Math.log(val));
+        return MapUtility.iMap(vals, new UnaryFunction<Double, Double>() {
+            @Override
+            public Double apply(Double val) {
+                return val == 0.0 ? 0.0 : 1 + Math.log(val);
+            }
+        });
     }
 
     private static Map<String, Double> normalizeTF(Map<String, Double> tf, Document d) {
@@ -143,8 +151,13 @@ public abstract class Learner {
      * @return
      */
     private static Map<String, Double> lengthNormalize(Map<String, Double> termFreqs, Document d) {
-        double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
-        return MapUtility.iMap(termFreqs, f -> f / smoothedBodyLength);
+        final double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
+        return MapUtility.iMap(termFreqs, new UnaryFunction<Double, Double>() {
+            @Override
+            public Double apply(Double f) {
+                return f / smoothedBodyLength;
+            }
+        });
     }
 
     protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
