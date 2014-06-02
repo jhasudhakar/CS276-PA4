@@ -151,7 +151,7 @@ public abstract class Learner {
      * @return
      */
     private static Map<String, Double> lengthNormalize(Map<String, Double> termFreqs, Document d) {
-        double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
+        final double smoothedBodyLength = d.getBodyLength() + SMOOTH_BODY_LENGTH;
         return MapUtility.iMap(termFreqs, new UnaryFunction<Double, Double>() {
             @Override
             public Double apply(Double f) {

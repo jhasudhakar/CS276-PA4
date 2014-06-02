@@ -121,7 +121,7 @@ public class Document {
         List<Pair<Integer, String>> bodyTermPositions = new ArrayList<Pair<Integer, String>>();
         // generate <position, term> pairs
         for (Map.Entry<String, List<Integer>> et : bodyHits.entrySet()) {
-            String term = et.getKey();
+            final String term = et.getKey();
             bodyTermPositions.addAll(ListUtility.map(et.getValue(),
                     new UnaryFunction<Integer, Pair<Integer, String>>() {
                         @Override
@@ -215,7 +215,7 @@ public class Document {
      * @param termSet unique terms
      * @return the smallest window, or -1 if no smallest window found
      */
-    public int getSmallestWindow(Set<String> termSet) {
+    public int getSmallestWindow(final Set<String> termSet) {
         List<Integer> smallestWindows = ListUtility.filter(
                 ListUtility.map(possibleWindows,
                         new UnaryFunction<List<Pair<Integer, String>>, Integer>() {

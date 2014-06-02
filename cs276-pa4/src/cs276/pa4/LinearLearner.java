@@ -54,7 +54,7 @@ public abstract class LinearLearner extends Learner {
 
     @Override
     protected List<String> rankDocuments(String query, Map<String, Integer> instances,
-                                         Classifier model, Instances allFeatures) {
+                                         final Classifier model, final Instances allFeatures) {
         List<Pair<String, Integer>> pairs = MapUtility.toPairs(instances);
 
         Collections.sort(pairs, new Comparator<Pair<String, Integer>>() {

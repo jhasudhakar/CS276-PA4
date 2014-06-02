@@ -138,7 +138,7 @@ public class LinearSVMLearner extends LinearLearner {
 
         // when training, stndardize doc features and generate pair features
         // train standardizer
-        Instances features = standardizeInstances(testFeatures.features);
+        final Instances features = standardizeInstances(testFeatures.features);
 
         Instances pairFeatures = new Instances(datasetName+"2", getAttributes(), 0);
         pairFeatures.setClassIndex(0);
@@ -148,7 +148,7 @@ public class LinearSVMLearner extends LinearLearner {
                     new UnaryFunction<Map.Entry<String, Integer>, Pair<String, Instance>>() {
                         @Override
                         public Pair<String, Instance> apply(Map.Entry<String, Integer> et) {
-                            return new Pair<String, Instance>(et.getKey(), features.instance(et.getValue()));
+                            return new Pair<>(et.getKey(), features.instance(et.getValue()));
                         }
                     }
             );
