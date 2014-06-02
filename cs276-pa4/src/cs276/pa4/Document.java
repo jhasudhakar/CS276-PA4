@@ -2,14 +2,9 @@ package cs276.pa4;
 
 import cs276.pa4.doc.DocField;
 import cs276.pa4.doc.FieldProcessor;
-import cs276.pa4.util.MapUtility;
-import cs276.pa4.util.Pair;
+import cs276.pa4.util.*;
 
 import java.util.*;
-import java.util.stream.IntStream;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 public class Document {
     // fields
@@ -123,18 +118,27 @@ public class Document {
             possibleWindows.add(translateList(FieldProcessor.splitField(anchorText)));
         }
 
-        bodyTermPositions = bodyHits.entrySet()
-                .stream()
-                // generate <index, term> pairs
-                .flatMap(es -> {
-                    String term = es.getKey();
-                    return es.getValue()
-                            .stream()
-                            .map(i -> new Pair<>(i, term));
-                })
-                // sort by index
-                .sorted((p1, p2) -> p1.getFirst().compareTo(p2.getFirst()))
-                .collect(toList());
+        List<Pair<Integer, String>> bodyTermPositions = new ArrayList<Pair<Integer, String>>();
+        // generate <position, term> pairs
+        for (Map.Entry<String, List<Integer>> et : bodyHits.entrySet()) {
+            String term = et.getKey();
+            bodyTermPositions.addAll(ListUtility.map(et.getValue(),
+                    new UnaryFunction<Integer, Pair<Integer, String>>() {
+                        @Override
+                        public Pair<Integer, String> apply(Integer i) {
+                            return new Pair<Integer, String>(i, term);
+                        }
+                    }
+            ));
+        }
+
+        // sort them
+        Collections.sort(bodyTermPositions, new Comparator<Pair<Integer, String>>() {
+            @Override
+            public int compare(Pair<Integer, String> p1, Pair<Integer, String> p2) {
+                return p1.getFirst().compareTo(p2.getFirst());
+            }
+        });
     }
 
     /**
@@ -143,9 +147,12 @@ public class Document {
      * @return
      */
     private List<Pair<Integer, String>> translateList(List<String> terms) {
-        return IntStream.range(0, terms.size())
-                .mapToObj(i -> new Pair<>(i, terms.get(i)))
-                .collect(toList());
+        List<Pair<Integer, String>> positions = new ArrayList<Pair<Integer, String>>();
+        for (int i = 0; i < terms.size(); ++i) {
+            positions.add(new Pair<Integer, String>(i, terms.get(i)));
+        }
+
+        return positions;
     }
 
 
@@ -158,10 +165,14 @@ public class Document {
      * @return the minimal window
      */
     private static <T> int getWindow(List<Pair<Integer, T>> positions, Set<T> objects) {
-        Set<T> uniques = positions
-                .stream()
-                .map(p -> p.getSecond())
-                .collect(toSet());
+        Set<T> uniques = new HashSet<T>(ListUtility.map(positions,
+                new UnaryFunction<Pair<Integer, T>, T>() {
+                    @Override
+                    public T apply(Pair<Integer, T> p) {
+                        return p.getSecond();
+                    }
+                }
+        ));
 
         if (!uniques.containsAll(objects)) {
             return -1;
@@ -205,14 +216,28 @@ public class Document {
      * @return the smallest window, or -1 if no smallest window found
      */
     public int getSmallestWindow(Set<String> termSet) {
-        OptionalInt sw1 = possibleWindows
-                .stream()
-                .map(pos -> getWindow(pos, termSet))
-                .filter(i -> i > 0)
-                .mapToInt(i -> i)
-                .min();
+        List<Integer> smallestWindows = ListUtility.filter(
+                ListUtility.map(possibleWindows,
+                        new UnaryFunction<List<Pair<Integer, String>>, Integer>() {
+                            @Override
+                            public Integer apply(List<Pair<Integer, String>> positions) {
+                                return getWindow(positions, termSet);
+                            }
+                        }
+                ),
+                new Predicate<Integer>() {
+                    @Override
+                    public boolean test(Integer i) {
+                        return i > 0;
+                    }
+                }
+        );
 
-        int sw = sw1.isPresent() ? sw1.getAsInt() : -1;
+        int sw = -1;
+
+        if (smallestWindows.size() > 0) {
+            sw = Collections.min(smallestWindows);
+        }
 
         int bodySw = getBodyWindow(termSet);
 
@@ -235,15 +260,13 @@ public class Document {
         if (f == DocField.body) {
             return this.bodyLength;
         } else if (f == DocField.anchor) {
-            return anchors.entrySet()
-                    .stream()
-                    .map(et -> {
-                        List<String> tokens = FieldProcessor.splitField(et.getKey());
-                        return MapUtility.magnify(MapUtility.count(tokens), et.getValue());
-                    })
-                    .flatMap(m -> m.values().stream())
-                    .mapToInt(x -> x)
-                    .sum();
+            List<Integer> counts = new ArrayList<Integer>();
+            for (Map.Entry<String, Integer> et : anchors.entrySet()) {
+                List<String> tokens = FieldProcessor.splitField(et.getKey());
+                counts.addAll(MapUtility.magnify(MapUtility.count(tokens), et.getValue()).values());
+            }
+
+            return ListUtility.sum(counts);
         }
 
         return fieldTokens.get(f).size();

@@ -1,6 +1,9 @@
 package cs276.pa4;
 
+import cs276.pa4.util.ListUtility;
+import cs276.pa4.util.MapUtility;
 import cs276.pa4.util.Pair;
+import cs276.pa4.util.UnaryFunction;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -8,7 +11,6 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by kavinyao on 5/25/14.
@@ -53,17 +55,24 @@ public abstract class LinearLearner extends Learner {
     @Override
     protected List<String> rankDocuments(String query, Map<String, Integer> instances,
                                          Classifier model, Instances allFeatures) {
-        return instances.entrySet()
-                .stream()
-                .map(et -> new Pair<>(et.getKey(), et.getValue()))
-                .sorted((p1, p2) -> {
-                    Instance inst1 = allFeatures.instance(p1.getSecond());
-                    Instance inst2 = allFeatures.instance(p2.getSecond());
+        List<Pair<String, Integer>> pairs = MapUtility.toPairs(instances);
 
-                    return compareInstances(model, inst1, inst2, allFeatures);
-                })
-                .map(Pair::getFirst)
-                .collect(Collectors.toList());
+        Collections.sort(pairs, new Comparator<Pair<String, Integer>>() {
+            @Override
+            public int compare(Pair<String, Integer> p1, Pair<String, Integer> p2) {
+                Instance inst1 = allFeatures.instance(p1.getSecond());
+                Instance inst2 = allFeatures.instance(p2.getSecond());
+
+                return compareInstances(model, inst1, inst2, allFeatures);
+            }
+        });
+
+        return ListUtility.map(pairs, new UnaryFunction<Pair<String, Integer>, String>() {
+            @Override
+            public String apply(Pair<String, Integer> p) {
+                return p.getFirst();
+            }
+        });
     }
 
     protected abstract int compareInstances(Classifier model, Instance inst1, Instance inst2, Instances allInstances);

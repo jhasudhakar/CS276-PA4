@@ -104,10 +104,12 @@ public abstract class Learner {
      * @return
      */
     protected static double optimizedDotProduct(Map<String, Double> sv, Map<String, Double> lv) {
-        return sv.entrySet()
-                .stream()
-                .mapToDouble(ev -> ev.getValue() * MapUtility.getWithFallback(lv, ev.getKey(), 0.0))
-                .sum();
+        double sum = 0.0;
+        for (Map.Entry<String, Double> et : sv.entrySet()) {
+            sum += et.getValue() * MapUtility.getWithFallback(lv, et.getKey(), 0.0);
+        }
+
+        return sum;
     }
 
     /**

@@ -1,6 +1,6 @@
 package cs276.pa4;
 
-import cs276.pa4.util.Pair;
+import cs276.pa4.util.*;
 import cs276.pa4.util.SerializationHelper;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LibSVM;
@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LinearSVMLearner extends LinearLearner {
     private static int POS_INDEX = 0;
@@ -145,10 +144,14 @@ public class LinearSVMLearner extends LinearLearner {
         pairFeatures.setClassIndex(0);
 
         for (Map<String, Integer> docSet : testFeatures.indexMap.values()) {
-            List<Pair<String, Instance>> docIndices = docSet.entrySet()
-                    .stream()
-                    .map(et -> new Pair<>(et.getKey(), features.instance(et.getValue())))
-                    .collect(Collectors.toList());
+            List<Pair<String, Instance>> docIndices = MapUtility.entryMap(docSet,
+                    new UnaryFunction<Map.Entry<String, Integer>, Pair<String, Instance>>() {
+                        @Override
+                        public Pair<String, Instance> apply(Map.Entry<String, Integer> et) {
+                            return new Pair<String, Instance>(et.getKey(), features.instance(et.getValue()));
+                        }
+                    }
+            );
 
             int L = docIndices.size();
 
