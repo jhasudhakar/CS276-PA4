@@ -15,8 +15,8 @@ public class NonLinearSVMLearner extends LinearSVMLearner {
 
     protected LibSVM getSVM() {
         LibSVM svm = new LibSVM();
-        svm.setCost(0.5);
-        svm.setGamma(0.5);
+        svm.setCost(8.0);
+        svm.setGamma(0.001);
         svm.setShrinking(false);
         return svm;
     }
