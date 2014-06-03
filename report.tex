@@ -1,0 +1,64 @@
+\documentclass{article}
+
+\usepackage{enumerate}
+\usepackage[bottom=1in,top=1in]{geometry}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[pdftex,colorlinks,urlcolor=blue]{hyperref}
+
+\geometry{letterpaper}
+
+\begin{document}
+
+\title{CS276 PA4 Report}
+
+\author{
+  Jiawei Yao\\
+  \texttt{jwyao@stanford.edu}
+  \and
+  Wei Wei\\
+  \texttt{wwei2@stanford.edu}
+}
+
+\maketitle
+
+\section{Task 1 - Pointwise Approach with Linear Regression}
+
+NDCG on train and dev datasets:
+
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        & \textbf{Train} & \textbf {Dev.} \\
+        \hline
+        \textbf{LR} & 0.8705 & 0.8420 \\
+        \hline
+    \end{tabular}
+    \caption{NDCG on Task 1}
+\end{table}
+
+\section{Task 2 - Pairwise Approach and Ranking SVM}
+
+NDCG on train and dev datasets:
+
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        & \textbf{Train} & \textbf {Dev.} \\
+        \hline
+        \textbf{Linear} & 0.8653 & 0.8463 \\
+        \hline
+        \textbf{RBF} & 0.8660 & 0.8458 \\
+        \hline
+    \end{tabular}
+    \caption{NDCG on Task 2}
+\end{table}
+
+We applied sublinear and length normalization on TF.
+
+For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
+
+\end{document}
