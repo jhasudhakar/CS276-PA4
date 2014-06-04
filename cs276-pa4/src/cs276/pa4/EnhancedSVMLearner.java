@@ -74,6 +74,8 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         attributes.add(new Attribute("pagerank_w"));
 
         attributes.add(new Attribute("fields_w"));
+        attributes.add(new Attribute("url_length_w"));
+        attributes.add(new Attribute("body_length_w"));
 
         return attributes;
     }
@@ -182,7 +184,7 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
         Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
-        double[] instance = new double[10];
+        double[] instance = new double[12];
 
         // tf-idf features
         instance[0] = score;
@@ -206,6 +208,8 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
             }
         }
         instance[9] = num;
+        instance[10] = doc.getOriginalURL().length();
+        instance[11] = doc.getBodyLength();
 
         return instance;
     }
