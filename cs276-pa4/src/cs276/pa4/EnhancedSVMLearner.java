@@ -69,12 +69,6 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         attributes.add(new Attribute("header_w"));
         attributes.add(new Attribute("anchor_w"));
 
-        attributes.add(new Attribute("b_url_w"));
-        attributes.add(new Attribute("b_title_w"));
-        attributes.add(new Attribute("b_body_w"));
-        attributes.add(new Attribute("b_header_w"));
-        attributes.add(new Attribute("b_anchor_w"));
-
         attributes.add(new Attribute("bm25_w"));
         attributes.add(new Attribute("window_w"));
         attributes.add(new Attribute("pagerank_w"));
@@ -166,18 +160,18 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
     protected void flip(double[] diffFS) {
         super.flip(diffFS);
 
-        for (int k = 15; k < 19; ++k) {
-            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
-        }
+//        for (int k = 15; k < 19; ++k) {
+//            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
+//        }
     }
 
     @Override
     protected double[] getFSDiff(double[] fs1, double[] fs2) {
         double[] diffFS = super.getFSDiff(fs1, fs2);
 
-        for (int k = 15; k < 19; ++k) {
-            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
-        }
+//        for (int k = 15; k < 19; ++k) {
+//            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
+//        }
 
         return diffFS;
     }
