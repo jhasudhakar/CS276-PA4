@@ -184,7 +184,7 @@ public abstract class SVMLearner extends LinearLearner {
         return tf;
     }
 
-    private void flip(double[] diffFS) {
+    protected void flip(double[] diffFS) {
         diffFS[0] = 1.0 - diffFS[0];
         int S = diffFS.length;
         for (int k = 1; k < S; ++k) {
@@ -192,7 +192,7 @@ public abstract class SVMLearner extends LinearLearner {
         }
     }
 
-    private double[] getFSDiff(double[] fs1, double[] fs2) {
+    protected double[] getFSDiff(double[] fs1, double[] fs2) {
         int S = fs1.length;
         double[] diffFS = new double[S];
 

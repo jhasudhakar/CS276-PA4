@@ -61,6 +61,10 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         labels.add("-1");
         attributes.add(new Attribute("label", labels));
 
+        ArrayList<String> binary = new ArrayList<>();
+        binary.add("0");
+        binary.add("1");
+
         attributes.add(new Attribute("url_w"));
         attributes.add(new Attribute("title_w"));
         attributes.add(new Attribute("body_w"));
@@ -79,9 +83,9 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
 
         attributes.add(new Attribute("url_len_w"));
         attributes.add(new Attribute("log_body_len_w"));
-        attributes.add(new Attribute("is_pdf"));
-        attributes.add(new Attribute("with_cgi-bin"));
-        attributes.add(new Attribute("got_all_query_words"));
+        attributes.add(new Attribute("is_pdf", binary));
+        attributes.add(new Attribute("with_cgi-bin", binary));
+        attributes.add(new Attribute("got_all_query_words", binary));
 
         return attributes;
     }
@@ -152,6 +156,26 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
     }
 
     @Override
+    protected void flip(double[] diffFS) {
+        super.flip(diffFS);
+
+        for (int k = 15; k < 19; ++k) {
+            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
+        }
+    }
+
+    @Override
+    protected double[] getFSDiff(double[] fs1, double[] fs2) {
+        double[] diffFS = super.getFSDiff(fs1, fs2);
+
+        for (int k = 15; k < 19; ++k) {
+            diffFS[k] = diffFS[k] == 0.0 ? 0.0 : 1.0;
+        }
+
+        return diffFS;
+    }
+
+    @Override
     protected double[] extractFeaturesFromDocument(Query q, Document doc,
                                                    double score, Map<String, Double> idfs) {
         Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
@@ -161,6 +185,7 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
 
         // tf-idf features
         features.add(score);
+
         features.add(dotProduct(tfQuery, tfs.get(DocField.url)));
         features.add(dotProduct(tfQuery, tfs.get(DocField.title)));
         features.add(dotProduct(tfQuery, tfs.get(DocField.body)));
@@ -168,7 +193,7 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         features.add(dotProduct(tfQuery, tfs.get(DocField.anchor)));
 
         // add binary features
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 1; i < 6; ++i) {
             features.add(features.get(i) > 0 ? 1.0 : 0.0);
         }
 
