@@ -5,7 +5,7 @@ import weka.classifiers.functions.LibSVM;
 /**
  * Created by kavinyao on 5/27/14.
  */
-public class NonLinearSVMLearner extends LinearSVMLearner {
+public class NonLinearSVMLearner extends SVMLearner {
     public NonLinearSVMLearner() {
     }
 
