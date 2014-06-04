@@ -118,7 +118,7 @@ public class Document {
             possibleWindows.add(translateList(FieldProcessor.splitField(anchorText)));
         }
 
-        List<Pair<Integer, String>> bodyTermPositions = new ArrayList<Pair<Integer, String>>();
+        bodyTermPositions = new ArrayList<Pair<Integer, String>>();
         // generate <position, term> pairs
         for (Map.Entry<String, List<Integer>> et : bodyHits.entrySet()) {
             final String term = et.getKey();

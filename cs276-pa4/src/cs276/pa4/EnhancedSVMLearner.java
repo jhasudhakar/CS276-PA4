@@ -177,7 +177,12 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         double bm25 = tfQuery.keySet()
                 .stream()
                 .map(t -> {
-                    double idf = idfs.get(t);
+                    double idf = 0.0;
+                    if (idfs.containsKey(t)) {
+                        idf = idfs.get(t);
+                    } else {
+                        idf = Math.log(Util.NDocs);
+                    }
                     double wdt = getTermWeight(d, tfs, t, q);
                     if (wdt + K1 == 0.0) {
                         return 0.0;
