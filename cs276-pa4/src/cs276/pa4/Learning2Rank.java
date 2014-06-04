@@ -22,7 +22,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner();
         } else if (task == 3) {
-            learner = new NonLinearSVMLearner();
+            learner = new LinearEnhancedSVMLearner();
         } else if (task == 4) {
 			
 			/* 
@@ -50,7 +50,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner(true);
         } else if (task == 3) {
-            learner = new NonLinearSVMLearner(true);
+            learner = new LinearEnhancedSVMLearner(true);
         } else if (task == 4) {
 				
 				/* 

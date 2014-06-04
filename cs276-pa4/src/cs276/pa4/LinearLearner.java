@@ -28,7 +28,7 @@ public abstract class LinearLearner extends Learner {
             Document doc = entry.getValue();
 
             double relScore = rels == null ? 0.0 : rels.get(query).get(url);
-            Instance inst = new DenseInstance(1.0, extractTfidfFeatures(q, doc, relScore, idfs));
+            Instance inst = new DenseInstance(1.0, extractFeaturesFromDocument(q, doc, relScore, idfs));
             features.add(inst);
             indices.put(url, index++);
         }
@@ -36,6 +36,11 @@ public abstract class LinearLearner extends Learner {
         indexMap.put(query, indices);
 
         return index;
+    }
+
+    // Overridable by subclass
+    protected double[] extractFeaturesFromDocument(Query q, Document doc, double score, Map<String, Double> idfs) {
+        return extractTfidfFeatures(q, doc, score, idfs);
     }
 
     @Override

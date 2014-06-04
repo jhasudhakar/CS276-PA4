@@ -45,6 +45,8 @@ public abstract class Learner {
             rels = loadRelData(relFile);
         }
 
+        processDocuments(data);
+
         Map<String, Map<String, Integer>> indexMap = new HashMap<>();
         int index = 0;
         for (Map.Entry<Query, Map<String, Document>> entry : data.entrySet()) {
@@ -60,6 +62,15 @@ public abstract class Learner {
         testFeatures.indexMap = indexMap;
 
         return testFeatures;
+    }
+
+    /**
+     * Hook after documents are laoded.
+     * Overridable by subclass.
+     * @param data
+     */
+    protected void processDocuments(Map<Query, Map<String, Document>> data) {
+        // do nothing
     }
 
     /* Test the model, return ranked queries */
@@ -161,25 +172,8 @@ public abstract class Learner {
     }
 
     protected static double[] extractTfidfFeatures(Query q, Document doc, double score, Map<String, Double> idfs) {
-        // get term frequencies
-        Map<DocField, Map<String, Double>> tfs = new HashMap<>();
-        for (DocField docField : DocField.values()) {
-            TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
-            Map<String, Double> tf = normalizeTF(MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q)), doc);
-            tfs.put(docField, tf);
-        }
-
-        // get query frequencies
-        Map<String, Double> tfQuery = new HashMap<>();
-        Map<String, Integer> counts = MapUtility.count(q.getQueryWords());
-        for (Map.Entry<String, Integer> et : counts.entrySet()) {
-            String term = et.getKey();
-            if (idfs.containsKey(term)) {
-                tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
-            } else {
-                tfQuery.put(term, Math.log(Util.NDocs));
-            }
-        }
+        Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
+        Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
         // add data
         double[] instance = new double[6];
@@ -191,5 +185,33 @@ public abstract class Learner {
         instance[5] = dotProduct(tfQuery, tfs.get(DocField.anchor));
 
         return instance;
+    }
+
+    protected static Map<DocField, Map<String, Double>> getRawDocTermFreqs(Query q, Document doc) {
+        // get term frequencies
+        Map<DocField, Map<String, Double>> tfs = new HashMap<>();
+        for (DocField docField : DocField.values()) {
+            TermFreqExtractor extractor = TermFreqExtractor.getExtractor(docField);
+            Map<String, Double> tf = normalizeTF(MapUtility.toDoubleMap(extractor.getTermFreqs(doc, q)), doc);
+            tfs.put(docField, tf);
+        }
+        return tfs;
+    }
+
+    protected static Map<String, Double> getQueryFreqs(Query q, Map<String, Double> idfs) {
+        // get query frequencies
+        Map<String, Double> tfQuery = new HashMap<>();
+        Map<String, Integer> counts = MapUtility.count(q.getQueryWords());
+
+        for (Map.Entry<String, Integer> et : counts.entrySet()) {
+            String term = et.getKey();
+            if (idfs.containsKey(term)) {
+                tfQuery.put(term, 1.0 * counts.get(term) * idfs.get(term));
+            } else {
+                tfQuery.put(term, Math.log(Util.NDocs));
+            }
+        }
+
+        return tfQuery;
     }
 }
