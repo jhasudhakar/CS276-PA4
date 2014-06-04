@@ -27,6 +27,18 @@
 
 \section{Task 1 - Pointwise Approach with Linear Regression}
 
+In pointwise approach, we use \texttt{LinearRegression} model with TF-IDF features.
+We apply the following tweaks to TF-IDF features:
+
+\begin{itemize}
+    \item add-one smoothing on IDF
+    \item sublinear on raw term frequencies
+    \item body length normalization with added length of 900
+\end{itemize}
+
+After the model has been trained, for documents of given query, we use \texttt{Collections.sort} on the documents with a comparator such that
+for two documents $d_1,d_2$, the one with higher score from the trained LR model is ranked higher.
+
 NDCG on train and dev datasets:
 
 \begin{table}[!htb]
@@ -43,6 +55,30 @@ NDCG on train and dev datasets:
 
 \section{Task 2 - Pairwise Approach and Ranking SVM}
 
+For this task, we use the same TF-IDF features as in Task 1 with the same tweaks.
+
+In training SVM, the following techniques are used:
+
+\begin{itemize}
+    \item use \texttt{Standardize} to standardize document features (not the differences)
+    \item generate evenly distribtued features for each label by computing differences of document features
+\end{itemize}
+
+\texttt{Collections.sort} is used to rank documents of a same query.
+For documents $d_1,d_2$, the comparator
+
+\begin{enumerate}
+    \item standardizes the document features with \emph{the same} \texttt{Standardize} from training
+    \item computes the difference
+    \item feeds the difference vector to the trained SVM
+        \begin{itemize}
+            \item if the label output is positive, $d_1$ is ranked higher
+            \item otherwise $d_1$ is considered as \emph{not higher than} $d_2$\footnote{In this case, we let the sort algorithm to break tie.}
+        \end{itemize}
+\end{enumerate}
+
+For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
+
 NDCG on train and dev datasets:
 
 \begin{table}[!htb]
@@ -51,17 +87,13 @@ NDCG on train and dev datasets:
         \hline
         & \textbf{Train} & \textbf {Dev.} \\
         \hline
-        \textbf{Linear} & 0.8653 & 0.8463 \\
+        \textbf{Linear SVM} & 0.8653 & 0.8463 \\
         \hline
-        \textbf{RBF} & 0.8660 & 0.8458 \\
+        \textbf{RBF SVM} & 0.8660 & 0.8458 \\
         \hline
     \end{tabular}
     \caption{NDCG on Task 2}
 \end{table}
-
-We applied sublinear and length normalization on TF.
-
-For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
 
 \section{Task 3 - More Features and Error Analysis}
 
