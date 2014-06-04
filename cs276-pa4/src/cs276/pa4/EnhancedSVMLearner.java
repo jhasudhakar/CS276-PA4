@@ -1,14 +1,12 @@
 package cs276.pa4;
 
 import cs276.pa4.doc.DocField;
+import cs276.pa4.util.ListUtility;
 import cs276.pa4.util.MapUtility;
+import cs276.pa4.util.UnaryFunction;
 import weka.core.Attribute;
 
 import java.util.*;
-import java.util.function.Function;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Created by kavinyao on 6/3/14.
@@ -96,16 +94,23 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
      */
     @Override
     protected void processDocuments(Map<Query, Map<String, Document>> queryDict) {
-        List<Document> uniqueDocs = queryDict.values()
-                .stream()
-                .flatMap(m -> m.values().stream())
-                .distinct()
-                .collect(toList());
+        Set<Document> uniqueDocSet = new HashSet<>();
+        for (Map<String, Document> docs : queryDict.values()) {
+            uniqueDocSet.addAll(docs.values());
+        }
+        List<Document> uniqueDocs = new ArrayList<>(uniqueDocSet);
 
         // compute length of each field
         lengths = new HashMap<>();
         for (DocField f : DocField.values()) {
-            lengths.put(f, lengthsOfField(uniqueDocs, d -> d.getNumFieldTokens(f)));
+            // for closure to work in Java 7
+            final DocField ff = f;
+            lengths.put(f, lengthsOfField(uniqueDocs, new UnaryFunction<Document, Integer>() {
+                @Override
+                public Integer apply(Document d) {
+                    return d.getNumFieldTokens(ff);
+                }
+            }));
         }
 
         // compute average lengths of each field
@@ -115,9 +120,10 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
             //System.err.println("avg(" + docField + ") = " + avgLengths.get(docField));
         }
 
-        pagerankScores = uniqueDocs
-                .stream()
-                .collect(toMap(Function.identity(), d -> new Double(d.getPageRank())));
+        pagerankScores = new HashMap<>();
+        for (Document doc : uniqueDocs) {
+            pagerankScores.put(doc, (double) doc.getPageRank());
+        }
     }
 
     /**
@@ -127,32 +133,37 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
      * @return
      */
     private static Map<Document, Double> lengthsOfField(List<Document> docs,
-                                                        Function<Document, Integer> getLength) {
-        return docs
-                .stream()
-                .collect(toMap(Function.identity(), d -> getLength.apply(d).doubleValue()));
+                                                        UnaryFunction<Document, Integer> getLength) {
+        Map<Document, Double> lengths = new HashMap<>();
+        for (Document doc : docs) {
+            lengths.put(doc, getLength.apply(doc).doubleValue());
+        }
+        return lengths;
     }
 
     private static Double averageFieldLength(Map<Document, Double> fieldLengths) {
-        return fieldLengths.values()
-                .stream()
-                        // cannot use Function.identity as a ToDoubleFunction, :(
-                .mapToDouble(d -> d)
-                .average()
-                .getAsDouble();
+        double sum = sum(fieldLengths.values());
+        return fieldLengths.size() == 0 ? 0.0 : sum / fieldLengths.size();
     }
 
-    private double getTermWeight(Document d, Map<DocField, Map<String, Double>> tfs, String t, Query q) {
-        return Arrays.asList(DocField.values())
-                .stream()
-                .map(f -> {
-                    double tf = MapUtility.getWithFallback(tfs.get(f), t, 0.0);
-                    double denominator = 1 + Bf.get(f) * (lengths.get(f).get(d) / avgLengths.get(f) - 1);
-                    double ftf = denominator == 0.0 ? 0.0 : tf / denominator;
-                    return Wf.get(f) * ftf;
-                })
-                .mapToDouble(x -> x)
-                .sum();
+    private static double sum(Collection<Double> fieldLengths) {
+        double sum = 0.0;
+        for (Double l : fieldLengths) {
+            sum += l;
+        }
+        return sum;
+    }
+
+    private double getTermWeight(final Document d, final Map<DocField, Map<String, Double>> tfs, final String t, Query q) {
+        return sum(ListUtility.map(Arrays.asList(DocField.values()), new UnaryFunction<DocField, Double>() {
+            @Override
+            public Double apply(DocField f) {
+                double tf = MapUtility.getWithFallback(tfs.get(f), t, 0.0);
+                double denominator = 1 + Bf.get(f) * (lengths.get(f).get(d) / avgLengths.get(f) - 1);
+                double ftf = denominator == 0.0 ? 0.0 : tf / denominator;
+                return Wf.get(f) * ftf;
+            }
+        }));
     }
 
     @Override
@@ -228,27 +239,26 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         return Math.log(pageRank + lambdaPrime);
     }
 
-    private double getSimScore(Document d, Query q, Map<String, Double> idfs) {
-        Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, d);
+    private double getSimScore(final Document d, final Query q, final Map<String, Double> idfs) {
+        final Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, d);
         Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
-        double bm25 = tfQuery.keySet()
-                .stream()
-                .map(t -> {
-                    double idf = 0.0;
-                    if (idfs.containsKey(t)) {
-                        idf = idfs.get(t);
-                    } else {
-                        idf = Math.log(Util.NDocs);
-                    }
-                    double wdt = getTermWeight(d, tfs, t, q);
-                    if (wdt + K1 == 0.0) {
-                        return 0.0;
-                    }
-                    return idf * wdt / (wdt + K1);
-                })
-                .mapToDouble(x -> x)
-                .sum();
+        double bm25 = sum(ListUtility.map(new ArrayList<>(tfQuery.keySet()), new UnaryFunction<String, Double>() {
+            @Override
+            public Double apply(String t) {
+                double idf = 0.0;
+                if (idfs.containsKey(t)) {
+                    idf = idfs.get(t);
+                } else {
+                    idf = Math.log(Util.NDocs);
+                }
+                double wdt = getTermWeight(d, tfs, t, q);
+                if (wdt + K1 == 0.0) {
+                    return 0.0;
+                }
+                return idf * wdt / (wdt + K1);
+            }
+        }));
 
         double pagerank = lambda * V(d.getPageRank());
         return bm25 + pagerank;
