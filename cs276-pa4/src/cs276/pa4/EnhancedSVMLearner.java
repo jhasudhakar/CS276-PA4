@@ -14,7 +14,6 @@ import static java.util.stream.Collectors.toMap;
  * Created by kavinyao on 6/3/14.
  */
 public abstract class EnhancedSVMLearner extends SVMLearner {
-    private static int NumFeatures = 9;
     private static Map<DocField, Double> Bf;
     private static Map<DocField, Double> Wf;
     private double K1 = 2.5;
@@ -143,24 +142,27 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
     @Override
     protected double[] extractFeaturesFromDocument(Query q, Document doc,
                                                    double score, Map<String, Double> idfs) {
-        double[] tfidfFeatures = super.extractFeaturesFromDocument(q, doc, score, idfs);
+        Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
+        Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
-        ArrayList<Double> features = new ArrayList<>();
-        for (double feature : tfidfFeatures) {
-            features.add(feature);
-        }
+        double[] instance = new double[9];
 
-        features.add(getSimScore(doc, q, idfs));
+        // tf-idf features
+        instance[0] = score;
+        instance[1] = dotProduct(tfQuery, tfs.get(DocField.url));
+        instance[2] = dotProduct(tfQuery, tfs.get(DocField.title));
+        instance[3] = dotProduct(tfQuery, tfs.get(DocField.body));
+        instance[4] = dotProduct(tfQuery, tfs.get(DocField.header));
+        instance[5] = dotProduct(tfQuery, tfs.get(DocField.anchor));
+
+        // extended features
+        instance[6] = getSimScore(doc, q, idfs);
+
         HashSet<String> termSet = new HashSet<>(q.getQueryWords());
-        features.add((double) doc.getSmallestWindow(termSet));
-        features.add((double) doc.getPageRank());
+        instance[7] = doc.getSmallestWindow(termSet);
+        instance[8] = doc.getPageRank();
 
-        double[] fs = new double[NumFeatures];
-        for (int i = 0; i < NumFeatures; ++i) {
-            fs[i] = features.get(i);
-        }
-
-        return fs;
+        return instance;
     }
 
     private double V(int pageRank) {
