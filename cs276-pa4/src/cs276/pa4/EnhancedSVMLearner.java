@@ -59,17 +59,29 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         ArrayList<String> labels = new ArrayList<>();
         labels.add("+1");
         labels.add("-1");
-
         attributes.add(new Attribute("label", labels));
+
         attributes.add(new Attribute("url_w"));
         attributes.add(new Attribute("title_w"));
         attributes.add(new Attribute("body_w"));
         attributes.add(new Attribute("header_w"));
         attributes.add(new Attribute("anchor_w"));
 
+        attributes.add(new Attribute("b_url_w"));
+        attributes.add(new Attribute("b_title_w"));
+        attributes.add(new Attribute("b_body_w"));
+        attributes.add(new Attribute("b_header_w"));
+        attributes.add(new Attribute("b_anchor_w"));
+
         attributes.add(new Attribute("bm25_w"));
         attributes.add(new Attribute("window_w"));
         attributes.add(new Attribute("pagerank_w"));
+
+        attributes.add(new Attribute("url_len_w"));
+        attributes.add(new Attribute("log_body_len_w"));
+        attributes.add(new Attribute("is_pdf"));
+        attributes.add(new Attribute("with_cgi-bin"));
+        attributes.add(new Attribute("got_all_query_words"));
 
         return attributes;
     }
@@ -145,24 +157,43 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
         Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
-        double[] instance = new double[9];
+        List<Double> features = new ArrayList<>();
 
         // tf-idf features
-        instance[0] = score;
-        instance[1] = dotProduct(tfQuery, tfs.get(DocField.url));
-        instance[2] = dotProduct(tfQuery, tfs.get(DocField.title));
-        instance[3] = dotProduct(tfQuery, tfs.get(DocField.body));
-        instance[4] = dotProduct(tfQuery, tfs.get(DocField.header));
-        instance[5] = dotProduct(tfQuery, tfs.get(DocField.anchor));
+        features.add(score);
+        features.add(dotProduct(tfQuery, tfs.get(DocField.url)));
+        features.add(dotProduct(tfQuery, tfs.get(DocField.title)));
+        features.add(dotProduct(tfQuery, tfs.get(DocField.body)));
+        features.add(dotProduct(tfQuery, tfs.get(DocField.header)));
+        features.add(dotProduct(tfQuery, tfs.get(DocField.anchor)));
+
+        // add binary features
+        for (int i = 0; i < 5; ++i) {
+            features.add(features.get(i) > 0 ? 1.0 : 0.0);
+        }
 
         // extended features
-        instance[6] = getSimScore(doc, q, idfs);
-
+        features.add(getSimScore(doc, q, idfs));
         HashSet<String> termSet = new HashSet<>(q.getQueryWords());
-        instance[7] = doc.getSmallestWindow(termSet);
-        instance[8] = doc.getPageRank();
+        int window = doc.getSmallestWindow(termSet);
+        features.add((double) window);
+        features.add((double) doc.getPageRank());
 
-        return instance;
+        features.add((double) doc.getOriginalURL().length());
+        features.add(Math.log(1 + doc.getBodyLength()));
+        features.add(doc.getOriginalURL().endsWith(".pdf") ? 1.0 : 0.0);
+        features.add(doc.getOriginalURL().contains("cgi-bin") ? 1.0 : 0.0);
+        features.add(window > -1 ? 1.0 : 0.0);
+
+        return listToArray(features);
+    }
+
+    private static double[] listToArray(List<Double> l) {
+        double[] arr = new double[l.size()];
+        for (int i = 0; i < l.size(); ++i) {
+            arr[i] = l.get(i);
+        }
+        return arr;
     }
 
     private double V(int pageRank) {
