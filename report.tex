@@ -5,6 +5,8 @@
 \usepackage{parskip}
 \usepackage{graphicx}
 \usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{amssymb}
 \usepackage[pdftex,colorlinks,urlcolor=blue]{hyperref}
 
 \geometry{letterpaper}
@@ -60,5 +62,32 @@ NDCG on train and dev datasets:
 We applied sublinear and length normalization on TF.
 
 For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
+
+\section{Task 3 - More Features and Error Analysis}
+
+\begin{table}[!htb]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    \multirow{2}{*}{bm25} & \multirow{2}{*}{window} & \multirow{2}{*}{pagerank} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
+                          & & & train & dev & train & dev \\ \cline{4-7}
+    \hline
+    \checkmark & & & 87.16 & 85.57 & & \\
+    \hline
+    & \checkmark & & 86.53 & 84.62 & & \\
+    \hline
+    & & \checkmark & 87.36 & 85.22 & & \\
+    \hline
+    \checkmark & \checkmark & & 87.16 & 85.53 & & \\
+    \hline
+    & \checkmark & \checkmark & 87.37 & 85.16 & & \\
+    \hline
+    \checkmark & & \checkmark & 87.06 & 85.56 & & \\
+    \hline
+    \checkmark & \checkmark & \checkmark & 86.53 & 84.63 & & \\
+    \hline
+  \end{tabular}
+  \caption{Results for task 3}
+\end{table}
 
 \end{document}
