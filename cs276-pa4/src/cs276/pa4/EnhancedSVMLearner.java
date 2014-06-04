@@ -79,11 +79,7 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         attributes.add(new Attribute("window_w"));
         attributes.add(new Attribute("pagerank_w"));
 
-        attributes.add(new Attribute("url_len_w"));
-        attributes.add(new Attribute("log_body_len_w"));
-        attributes.add(new Attribute("is_pdf", binary));
-        attributes.add(new Attribute("with_cgi-bin", binary));
-        attributes.add(new Attribute("got_all_query_words", binary));
+        attributes.add(new Attribute("fields_w"));
 
         return attributes;
     }
@@ -192,36 +188,32 @@ public abstract class EnhancedSVMLearner extends SVMLearner {
         Map<DocField, Map<String, Double>> tfs = getRawDocTermFreqs(q, doc);
         Map<String, Double> tfQuery = getQueryFreqs(q, idfs);
 
-        List<Double> features = new ArrayList<>();
+        double[] instance = new double[10];
 
         // tf-idf features
-        features.add(score);
-
-        features.add(dotProduct(tfQuery, tfs.get(DocField.url)));
-        features.add(dotProduct(tfQuery, tfs.get(DocField.title)));
-        features.add(dotProduct(tfQuery, tfs.get(DocField.body)));
-        features.add(dotProduct(tfQuery, tfs.get(DocField.header)));
-        features.add(dotProduct(tfQuery, tfs.get(DocField.anchor)));
-
-        // add binary features
-        for (int i = 1; i < 6; ++i) {
-            features.add(features.get(i) > 0 ? 1.0 : 0.0);
-        }
+        instance[0] = score;
+        instance[1] = dotProduct(tfQuery, tfs.get(DocField.url));
+        instance[2] = dotProduct(tfQuery, tfs.get(DocField.title));
+        instance[3] = dotProduct(tfQuery, tfs.get(DocField.body));
+        instance[4] = dotProduct(tfQuery, tfs.get(DocField.header));
+        instance[5] = dotProduct(tfQuery, tfs.get(DocField.anchor));
 
         // extended features
-        features.add(getSimScore(doc, q, idfs));
+        instance[6] = getSimScore(doc, q, idfs);
+
         HashSet<String> termSet = new HashSet<>(q.getQueryWords());
-        int window = doc.getSmallestWindow(termSet);
-        features.add((double) window);
-        features.add((double) doc.getPageRank());
+        instance[7] = doc.getSmallestWindow(termSet);
+        instance[8] = doc.getPageRank();
 
-        features.add((double) doc.getOriginalURL().length());
-        features.add(Math.log(1 + doc.getBodyLength()));
-        features.add(doc.getOriginalURL().endsWith(".pdf") ? 1.0 : 0.0);
-        features.add(doc.getOriginalURL().contains("cgi-bin") ? 1.0 : 0.0);
-        features.add(window > -1 ? 1.0 : 0.0);
+        int num = 0;
+        for (int i = 1; i < 6; i++) {
+            if (instance[i] > 0) {
+                num++;
+            }
+        }
+        instance[9] = num;
 
-        return listToArray(features);
+        return instance;
     }
 
     private static double[] listToArray(List<Double> l) {
