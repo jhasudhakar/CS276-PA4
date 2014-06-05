@@ -163,7 +163,7 @@ After experimenting with three suggested features, we found three types of syste
     \begin{itemize}
       \item For query ``mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first url is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take url length into consideration by adding a new numeric feature.
     \end{itemize}
-  \item Our system gives ``.pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ``.pdf".
+  \item Our system gives ``.pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ``.pdf". However, this feature doesn't work well. Some raters doesn't like pdf files, but actually they are relevant documents.
   \item Our system doesn't take current time into consideration. For example, if user searches for 2014 academic calendar, we should give 2012-2013 academic calendar a high score. However, we don't add this one as a new feature because it's relatively hard to previsely extract.
 \end{enumerate}
 
@@ -185,31 +185,40 @@ Considering \textbf{Body length} is reasonable because if one document has long 
 
 \subsection{Discussion on effects of different features}
 
-We do an ablation test on our proposed additional features.
+We do an ablation test on our proposed additional features using linear SVM. (We don't use RBF kernel because we need to do grid search for each combination which is very time consuming).
 
 \begin{table}[!htb]
-    \centering
-    \begin{tabular}{| r | l | l |}
-        \hline
-        Feature removed & Train & Dev \\
-        None removed & & 85.89 \\
-        \hline
-        Url length & & \\
-        \hline
-        Number of fields & & \\
-        \hline
-        Body Length & & \\
-        \hline
-    \end{tabular}
-    \caption{Ablation Test}
-    \label{table:ablation}
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    \multirow{2}{*}{Num Fields} & \multirow{2}{*}{Body length} & \multirow{2}{*}{URL length} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
+                          & & & train & dev & train & dev \\ \cline{4-7}
+    \hline
+    \checkmark & & & 0.8755 & 0.8562 & 0.8741 & \textbf{0.8624} \\
+    \hline
+    & \checkmark & & 0.8722 & 0.8554 & - & - \\
+    \hline
+    & & \checkmark & 0.8762 & 0.8540 & - & - \\
+    \hline
+    \checkmark & \checkmark & & 0.8767 & 0.8563 & - & - \\
+    \hline
+    & \checkmark & \checkmark & 0.8762 & 0.8547 & - & - \\
+    \hline
+    \checkmark & & \checkmark & 0.8744 & 0.8536 & - & - \\
+    \hline
+    \checkmark & \checkmark & \checkmark & 0.8753 & 0.8527 & 0.8763 & 0.8589\\
+    \hline
+  \end{tabular}
+  \caption{Ablation Test Based On Linear SVM}
+  \label{table:ablation}
 \end{table}
 
-As can be seen from Table.~(\ref{table:ablation}), when we remove number of fields feature, the performance hurts the most. Body length contribute a little while url length can be somewhat helpful.
-
-The reason that body length doesn't contribute much is because we only take length into consideration but we do not take term counts in body into consideration. If a document has relatively small body length but it doesn't contain any keywords, it should be judged irrelative. Vice versa, if a document has long body length but contains a lot of query words, it should get high score.
-
-Number of fields works surprisingly good. If a document contains all query words in all its fields, it may be a good indicator that this document is relevant to the query.
+As can be seen from Table.~(\ref{table:ablation}):
+\begin{itemize}
+   \item If we only add \textbf{Num Fields} the performance can be increased a lot. Hence we did a grid search to find suitable parameters.
+   \item Body length seems a promising feature because when we remove it we get poorer performance. It performs well with linear SVM however it doesn't work well with non-linear SVM. Shorter body length doesn't necessarily indicate higher relevance and longer body length doesn't imply more information. As an afterthought, we may try log(bodyLength) in the future.
+   \item URL length is not a good feature. When we remove the URL from features, we get the highest NDCG among all others. And URL length alone gives us poor performance. URL length doesn't work well as expected. Users tend to search for specific information. Page with short URLs tend to have generic information.
+ \end{itemize}
 
 \section{Extra Credit}
 
