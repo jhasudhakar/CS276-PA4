@@ -223,7 +223,7 @@ As can be seen from Table.~(\ref{table:ablation}):
 \section{Extra Credit}
 
 For extra credit, we use SVM regression feature provided for the pointwise approach.
-Specifically, we use NuSVR SVM with RBF kernel, $C=16.0,\nu=0.25$. We also tried standardizing data but that was not as good as expected.
+Specifically, we use $\nu$-SVR SVM with RBF kernel, $C=16.0,\nu=0.25$. We also tried standardizing data but that was not as good as expected.
 
 NDCG on train and dev datasets (numbers in parentheses are improvement over Task 1):
 
@@ -233,14 +233,16 @@ NDCG on train and dev datasets (numbers in parentheses are improvement over Task
         \hline
         & \textbf{Train} & \textbf {Dev.} \\
         \hline
-        \textbf{NuSVR} & 0.8669 (-0.42\%) & \textbf{0.8483} (0.75\%) \\
+        \textbf{$\nu$-SVR} & 0.8669 ($-0.42\%$) & \textbf{0.8483} ($+0.75\%$) \\
         \hline
-        \textbf{NuSVR w/ Std.} & 0.8770 (0.74\%) & 0.8328 (-1.09\%) \\
+        \textbf{$\nu$-SVR w/ Std.} & 0.8770 ($+0.74\%$) & 0.8328 ($-1.09\%$) \\
         \hline
     \end{tabular}
     \caption{NDCG on Extra Credit}
 \end{table}
 
-We can see that NuSVR generalizes better than linear regression - NDCG performance is slightly lower on train set but higher on dev set.
+We can see that $\nu$-SVR generalizes better than linear regression - NDCG performance is slightly lower on train set but higher on dev set. SVM regression is better because the data may not be linearly distributed and any linear regression may not fit well. In contrast, SVM uses a non-linear kernel, which is more flexible and can fit data of a non-linear shape\footnote{\url{http://scikit-learn.org/stable/auto_examples/svm/plot_svm_regression.html}}. Moreover, SVM regression introduces parameter $\varepsilon$\footnote{In $\nu$-SVR, $\varepsilon$ is replaced by $\nu$.} to make the result less sensitive to outliers\footnote{\url{http://kernelsvm.tripod.com/}}. This is a definite argument for why SVM regression generalizes better.
+
+As for standardization, since regression is inherently to fit a set of points, there's no need to transform data to a standard distribution. This might explain why SVR with standardization is worse.
 
 \end{document}
