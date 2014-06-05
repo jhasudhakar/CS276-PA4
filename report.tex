@@ -73,7 +73,7 @@ NDCG on train and dev datasets:
 
 For this task, we use the same TF-IDF features as in Task 1 with the same tweaks.
 
-In training SVM, the following techniques are used:
+When training SVM, the following techniques are used:
 
 \begin{itemize}
     \item use \texttt{Standardize} to standardize document features (not the differences)
@@ -93,7 +93,7 @@ For documents $d_1,d_2$, the comparator
         \end{itemize}
 \end{enumerate}
 
-For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
+For Linear SVM, default parameters are used. For RBF SVM, we set $C=8.0,\gamma=0.001$.
 
 \section{Task 3 - More Features and Error Analysis}
 
@@ -118,22 +118,22 @@ First, our NDCG performance train and dev datasets:
 \subsection{Implementation Decisions}
 
 \begin{itemize}
-    \item Use BM25 with pagerank. BM25 weights are copied from PA3. Use BM25 without PageRank give as lower score $85.23\%$ compared to $85.56\%$ using PageRank.
-    \item Adjusting $K_1$ in BM25 doesn't give us significant increase in NDCG score. We tried 1, 1.5, 2, 2.5, and 3, they all give us similar scores. The highest is $85.60\%$ while the lowest is $85.56\%$.
-    \item Use raw PageRank or log(PageRank). The NDCG results are similar so we use raw PageRank for simplicity.
+    \item Use BM25 with pagerank. BM25 weights are reused from PA3. Using BM25 without PageRank give us lower score 0.8523 compared to 0.8556 using PageRank.
+    \item Adjusting $K_1$ in BM25 doesn't give us significant increase in NDCG score. We tried 1, 1.5, 2, 2.5, and 3, and they all gave us similar scores. The highest is 0.8560 while the lowest is 0.8556.
+    \item Use raw PageRank instead of log(PageRank). The NDCG results are similar so we use raw PageRank for simplicity.
 \end{itemize}
 
-\subsection{Combination of suggested features}
+\subsection{Combination of Suggested Features}
 
-We experiment with three suggested features first. As we can see bm25 is the most important feature. Only using bm25 can boost performance by $1\%$. Smallest window is not a very appealing feature. (In PA3 smallest window also provides marginal performance boost.)
+We experimented with three suggested features first. As we can see BM25 is the most important feature. Only using BM25 can boost performance by 0.01. Smallest window is not a very appealing feature. (In PA3 smallest window also provides marginal performance boost.)
 
-As Non-linear SVM requires grid search, we only report NDCG scores with linear SVMs.
+NDCG scores with different feature combinations are shown in the following table\footnote{As Non-linear SVM requires grid search, we only report NDCG scores with linear SVMs.}:
 
 \begin{table}[!htb]
   \centering
   \begin{tabular}{|c|c|c|c|c|c|c|}
     \hline
-    \multirow{2}{*}{bm25} & \multirow{2}{*}{window} & \multirow{2}{*}{pagerank} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
+    \multirow{2}{*}{BM25} & \multirow{2}{*}{window} & \multirow{2}{*}{pagerank} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
                           & & & train & dev & train & dev \\ \cline{4-7}
     \hline
     \checkmark & & & 0.8716 & 0.8557 & - & - \\
@@ -154,38 +154,30 @@ As Non-linear SVM requires grid search, we only report NDCG scores with linear S
   \caption{Results for task 3 - NDCG with different feature combinations}
 \end{table}
 
-\subsection{Systematic errors}
+\subsection{Systematic Errors Analysis}
 
 After experimenting with three suggested features, we found three types of systematic errors.
 
 \begin{enumerate}
-  \item Our system favors long urls that have higher term count.
+  \item Our system favors long URLs that have higher term count.
     \begin{itemize}
-      \item For query ``mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first url is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take url length into consideration by adding a new numeric feature.
+      \item For query ``mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first URL is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take URL length into consideration by adding a new numeric feature.
     \end{itemize}
-  \item Our system gives ``.pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ``.pdf". However, this feature doesn't work well. Some raters doesn't like pdf files, but actually they are relevant documents.
+\item Our system gives ``.pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ``.pdf". However, after more careful investination, we found that this assumption is not rock-solid because some raters doesn't like files (including PDFs), even though actually they are highly relevant documents.
   \item Our system doesn't take current time into consideration. For example, if user searches for 2014 academic calendar, we should give 2012-2013 academic calendar a high score. However, we don't add this one as a new feature because it's relatively hard to previsely extract.
 \end{enumerate}
 
-\subsection{More features}
+\subsection{More Features and Discussion}
 
-We took three additional features into consideration:
+We took three additional features into consideration: 1) number of fields where any query word appear, 2) URL length and 3) body length.
 
-\begin{enumerate}
-    \item Number of fields where any query word appear.
-    \item URL length.
-    \item Body length.
-\end{enumerate}
+\textbf{Number of fields where any query word appear} is an extremely powerful feature and boosts the performance a lot. Intuitively, if all five fields contains some query words, the document may be more relevant.
 
-\textbf{Number of fields where any query word appear} is an extremely useful feature and boost our performance a lot. Basically, it assumes that if all five fields contains query words, the document may be better.
+\textbf{URL length} makes sense because shorter URL tends to be better based on a first observation. For example, given two URLs \url{http://nlp.stanford.edu/manning/tex/} and \url{http://nlp.stanford.edu/manning/tex/avm.sty} and query \texttt{christopher manning latex macros}, the former URL is shorter than the latter while the former contains all the key word of the latter. The latter may be more specific and contains less information of our information need.
 
-\textbf{URL length} makes sense because shorter url tends to be better based on our observation. For example, two urls are \url{http://nlp.stanford.edu/manning/tex/} and \url{http://nlp.stanford.edu/manning/tex/avm.sty} and the query is \texttt{christopher manning latex macros}, the former urls is shorter than the latter while the former contains all the key word of the latter. The latter may be more specific and contains less information of our information need.
+Considering \textbf{body length} is reasonable because if one document has long body length but has the same body hits as a shorter document, the shorter document tends to be more relevant.
 
-Considering \textbf{Body length} is reasonable because if one document has long body length but has the same body hits as a shorter document, the shorter document tends to be more relevant than the longer document.
-
-\subsection{Discussion on effects of different features}
-
-We do an ablation test on our proposed additional features using linear SVM. (We don't use RBF kernel because we need to do grid search for each combination which is very time consuming).
+We did an ablation test on our proposed additional features using linear SVM. (We don't use RBF kernel because we need to do grid search for each combination which is very time consuming).
 
 \begin{table}[!htb]
   \centering
@@ -215,15 +207,12 @@ We do an ablation test on our proposed additional features using linear SVM. (We
 
 As can be seen from Table.~(\ref{table:ablation}):
 \begin{itemize}
-   \item If we only add \textbf{Num Fields} the performance can be increased a lot. Hence we did a grid search to find suitable parameters.
-   \item Body length seems a promising feature because when we remove it we get poorer performance. It performs well with linear SVM however it doesn't work well with non-linear SVM. Shorter body length doesn't necessarily indicate higher relevance and longer body length doesn't imply more information. As an afterthought, we may try log(bodyLength) in the future.
-   \item URL length is not a good feature. When we remove the URL from features, we get the highest NDCG among all others. And URL length alone gives us poor performance. URL length doesn't work well as expected. Users tend to search for specific information. Page with short URLs tend to have generic information.
+   \item If we only add Num Fields the performance can be increased a lot. Indeed, after doing a grid search, we found a set of good parameters which gives a local maxima.
+   \item Body length seems a promising feature because when we remove it we get poorer performance. However, it doesn't work well with non-linear SVM. An explanation might be shorter body length doesn't necessarily indicate higher relevance and longer body length doesn't imply more information. As an afterthought, we may try log(bodyLength) in the future.
+   \item URL length is not a good feature. When we remove the URL from features, we get the highest NDCG among all others. And URL length alone gives us poor performance. The reason why URL length doesn't work well as expected is that users tend to issue specific queries but pages with short URLs tend to have generic information.
  \end{itemize}
 
 \section{Extra Credit}
-
-For extra credit, we use SVM regression feature provided for the pointwise approach.
-Specifically, we use $\nu$-SVR SVM with RBF kernel, $C=16.0,\nu=0.25$. We also tried standardizing data but that was not as good as expected.
 
 NDCG on train and dev datasets (numbers in parentheses are improvement over Task 1):
 
@@ -240,6 +229,9 @@ NDCG on train and dev datasets (numbers in parentheses are improvement over Task
     \end{tabular}
     \caption{NDCG on Extra Credit}
 \end{table}
+
+For extra credit, we use SVM regression feature provided for the pointwise approach.
+Specifically, we use $\nu$-SVR SVM with RBF kernel, $C=16.0,\nu=0.25$. We also tried standardizing data but that was not as good as expected (see table above).
 
 We can see that $\nu$-SVR generalizes better than linear regression - NDCG performance is slightly lower on train set but higher on dev set. SVM regression is better because the data may not be linearly distributed and any linear regression may not fit well. In contrast, SVM uses a non-linear kernel, which is more flexible and can fit data of a non-linear shape\footnote{\url{http://scikit-learn.org/stable/auto_examples/svm/plot_svm_regression.html}}. Moreover, SVM regression introduces parameter $\varepsilon$\footnote{In $\nu$-SVR, $\varepsilon$ is replaced by $\nu$.} to make the result less sensitive to outliers\footnote{\url{http://kernelsvm.tripod.com/}}. This is a definite argument for why SVM regression generalizes better.
 
