@@ -148,4 +148,10 @@ public class Util {
     public static void main(String[] args) {
         System.out.print(loadRelData(args[0]));
     }
+
+    public static int getJavaVersion() {
+        String[] version = System.getProperty("java.version").split("\\.");
+        int majorVersion = Integer.valueOf(version[1]);
+        return majorVersion;
+    }
 }

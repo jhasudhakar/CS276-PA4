@@ -16,8 +16,17 @@ public class NonLinearEnhancedSVMLearner extends EnhancedSVMLearner {
     @Override
     protected LibSVM getSVM() {
         LibSVM svm = new LibSVM();
-        svm.setCost(100);
-        svm.setGamma(0.001);
+
+        if (Util.getJavaVersion() == 8) {
+            // for Java 8
+            svm.setCost(100);
+            svm.setGamma(0.001);
+        } else {
+            // for Java < 8
+            svm.setCost(34);
+            svm.setGamma(0.01005);
+        }
+
         svm.setShrinking(false);
         return svm;
     }

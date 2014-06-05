@@ -21,11 +21,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner();
         } else if (task == 3) {
-            if (getJavaVersion() == 8) {
-                learner = new NonLinearEnhancedSVMLearner();
-            } else {
-                learner = new CornNonLinearEnhancedSVMLearner();
-            }
+            learner = new NonLinearEnhancedSVMLearner();
         } else if (task == 4) {
             learner = new SVRLearner();
         }
@@ -48,11 +44,7 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner(true);
         } else if (task == 3) {
-            if (getJavaVersion() == 8) {
-                learner = new NonLinearEnhancedSVMLearner(true);
-            } else {
-                learner = new CornNonLinearEnhancedSVMLearner(true);
-            }
+            learner = new NonLinearEnhancedSVMLearner(true);
         } else if (task == 4) {
             learner = new SVRLearner();
         }
@@ -130,12 +122,6 @@ public class Learning2Rank {
                 e.printStackTrace();
             }
         }
-    }
-
-    private static int getJavaVersion() {
-        String[] version = System.getProperty("java.version").split("\\.");
-        int majorVersion = Integer.valueOf(version[1]);
-        return majorVersion;
     }
 
 }
