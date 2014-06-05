@@ -154,7 +154,7 @@ As Non-linear SVM requires grid search, we only report NDCG scores with linear S
   \caption{Results for task 3 - NDCG with different feature combinations}
 \end{table}
 
-\subsection{Systematic Errors}
+\subsection{Systematic errors}
 
 After experimenting with three suggested features, we found three types of systematic errors.
 
@@ -183,7 +183,33 @@ We took three additional features into consideration:
 
 Considering \textbf{Body length} is reasonable because if one document has long body length but has the same body hits as a shorter document, the shorter document tends to be more relevant than the longer document.
 
-However, based on our experiment, not all three features are useful.
+\subsection{Discussion on effects of different features}
+
+We do an ablation test on our proposed additional features.
+
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        Feature removed & Train & Dev \\
+        None removed & & 85.89 \\
+        \hline
+        Url length & & \\
+        \hline
+        Number of fields & & \\
+        \hline
+        Body Length & & \\
+        \hline
+    \end{tabular}
+    \caption{Ablation Test}
+    \label{table:ablation}
+\end{table}
+
+As can be seen from Table.~(\ref{table:ablation}), when we remove number of fields feature, the performance hurts the most. Body length contribute a little while url length can be somewhat helpful.
+
+The reason that body length doesn't contribute much is because we only take length into consideration but we do not take term counts in body into consideration. If a document has relatively small body length but it doesn't contain any keywords, it should be judged irrelative. Vice versa, if a document has long body length but contains a lot of query words, it should get high score.
+
+Number of fields works surprisingly good. If a document contains all query words in all its fields, it may be a good indicator that this document is relevant to the query.
 
 \section{Extra Credit}
 
