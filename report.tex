@@ -122,4 +122,27 @@ NDCG on train and dev datasets:
   \caption{Results for task 3}
 \end{table}
 
+\section{Extra Credit}
+
+For extra credit, we use SVM regression feature provided for the pointwise approach.
+Specifically, we use NuSVR SVM with RBF kernel, $C=16.0,\nu=0.25$. We also tried standardizing data but that was not as good as expected.
+
+NDCG on train and dev datasets (numbers in parentheses are improvement over Task 1):
+
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        & \textbf{Train} & \textbf {Dev.} \\
+        \hline
+        \textbf{NuSVR} & 0.8669 (-0.42\%) & 0.8483 (0.75\%) \\
+        \hline
+        \textbf{NuSVR w/ Std.} & 0.8770 (0.74\%) & 0.8328 (-1.09\%) \\
+        \hline
+    \end{tabular}
+    \caption{NDCG on Task 1}
+\end{table}
+
+We can see that NuSVR generalizes better than linear regression - NDCG performance is slightly lower on train set but higher on dev set.
+
 \end{document}
