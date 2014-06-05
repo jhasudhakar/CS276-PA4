@@ -11,7 +11,6 @@ import java.util.Map;
 
 public class Learning2Rank {
 
-
     public static Classifier train(String train_data_file, String train_rel_file, int task, Map<String, Double> idfs) throws Exception {
         System.err.println("## Training with feature_file =" + train_data_file + ", rel_file = " + train_rel_file + " ... \n");
         Classifier model = null;
@@ -22,7 +21,11 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner();
         } else if (task == 3) {
-            learner = new NonLinearEnhancedSVMLearner();
+            if (getJavaVersion() == 8) {
+                learner = new NonLinearEnhancedSVMLearner();
+            } else {
+                learner = new CornNonLinearEnhancedSVMLearner();
+            }
         } else if (task == 4) {
             learner = new SVRLearner();
         }
@@ -45,7 +48,11 @@ public class Learning2Rank {
         } else if (task == 2) {
             learner = new LinearSVMLearner(true);
         } else if (task == 3) {
-            learner = new NonLinearEnhancedSVMLearner(true);
+            if (getJavaVersion() == 8) {
+                learner = new NonLinearEnhancedSVMLearner(true);
+            } else {
+                learner = new CornNonLinearEnhancedSVMLearner(true);
+            }
         } else if (task == 4) {
             learner = new SVRLearner();
         }
@@ -124,4 +131,11 @@ public class Learning2Rank {
             }
         }
     }
+
+    private static int getJavaVersion() {
+        String[] version = System.getProperty("java.version").split("\\.");
+        int majorVersion = Integer.valueOf(version[1]);
+        return majorVersion;
+    }
+
 }
