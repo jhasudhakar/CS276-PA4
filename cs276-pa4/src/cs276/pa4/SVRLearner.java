@@ -13,6 +13,8 @@ public class SVRLearner extends PointwiseLearner {
     public Classifier train(Instances dataset) {
         LibSVM svm = new LibSVM();
         svm.setSVMType(new SelectedTag(LibSVM.SVMTYPE_NU_SVR, LibSVM.TAGS_SVMTYPE));
+        svm.setCost(16);
+        svm.setNu(0.25);
         svm.setShrinking(false); // contributes a little speed-up (seem doesn't alter output value)
 
         try {
