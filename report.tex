@@ -27,6 +27,20 @@
 
 \section{Task 1 - Pointwise Approach with Linear Regression}
 
+NDCG on train and dev datasets:
+
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        & \textbf{Train} & \textbf {Dev.} \\
+        \hline
+        \textbf{Linear Regression} & 0.8705 & \textbf{0.8420} \\
+        \hline
+    \end{tabular}
+    \caption{NDCG on Task 1}
+\end{table}
+
 In pointwise approach, we use \texttt{LinearRegression} model with TF-IDF features.
 We apply the following tweaks to TF-IDF features:
 
@@ -37,7 +51,9 @@ We apply the following tweaks to TF-IDF features:
 \end{itemize}
 
 After the model has been trained, for documents of given query, we use \texttt{Collections.sort} on the documents with a comparator such that
-for two documents $d_1,d_2$, the one with higher score from the trained LR model is ranked higher.
+for two documents $d_1,d_2$, the one with higher score from the trained Linear Regression model is ranked higher.
+
+\section{Task 2 - Pairwise Approach and Ranking SVM}
 
 NDCG on train and dev datasets:
 
@@ -47,13 +63,13 @@ NDCG on train and dev datasets:
         \hline
         & \textbf{Train} & \textbf {Dev.} \\
         \hline
-        \textbf{LR} & 0.8705 & 0.8420 \\
+        \textbf{Linear SVM} & 0.8653 & \textbf{0.8463} \\
+        \hline
+        \textbf{RBF SVM} & 0.8660 & 0.8458 \\
         \hline
     \end{tabular}
-    \caption{NDCG on Task 1}
+    \caption{NDCG on Task 2}
 \end{table}
-
-\section{Task 2 - Pairwise Approach and Ranking SVM}
 
 For this task, we use the same TF-IDF features as in Task 1 with the same tweaks.
 
@@ -79,41 +95,31 @@ For documents $d_1,d_2$, the comparator
 
 For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0.001$.
 
-NDCG on train and dev datasets:
-
-\begin{table}[!htb]
-    \centering
-    \begin{tabular}{| r | l | l |}
-        \hline
-        & \textbf{Train} & \textbf {Dev.} \\
-        \hline
-        \textbf{Linear SVM} & 0.8653 & 0.8463 \\
-        \hline
-        \textbf{RBF SVM} & 0.8660 & 0.8458 \\
-        \hline
-    \end{tabular}
-    \caption{NDCG on Task 2}
-\end{table}
-
 \section{Task 3 - More Features and Error Analysis}
 
+First, our NDCG performance train and dev datasets:
+
 \begin{table}[!htb]
     \centering
     \begin{tabular}{| r | l | l |}
         \hline
         & \textbf{Train} & \textbf {Dev.} \\
         \hline
-        \textbf{RBF} & \textbf{TODO} & 0.8619 \\
+        \textbf{Local} & 0.8741 & \textbf{0.8619} \\
+        \hline
+        \textbf{CORN} & 0.8799 & 0.8598 \\
         \hline
     \end{tabular}
     \caption{NDCG on Task 3}
 \end{table}
 
+\textbf{Note}: We find that with the same parameter setting, the NDCG scores on our local machine (Mac OSX, Java 8) are different from NDCG scores on CORN machines. We don't know what the underlying reason is. Anyway, we also did grid search with different paramters on CORN machines, which finally gives us an NDCG score very close to 0.86. As a result, the Local row is the best result we achieved on our local machines (RBF kernel, $C=100,\gamma=0.001$) while the CORN row is the best result we achieved on CORN machines (RBF kernel, $C=34,\gamma=0.01005$).
+
 \subsection{Implementation Decisions}
 
 \begin{itemize}
     \item Use BM25 with pagerank. BM25 weights are copied from PA3. Use BM25 without PageRank give as lower score $85.23\%$ compared to $85.56\%$ using PageRank.
-    \item Adjusting $K1$ in BM25 doesn't give us significant increase in NDCG score. We tried 1, 1.5, 2, 2.5, and 3, they all give us similar scores. The highest is $85.60\%$ while the lowest is $85.56\%$.
+    \item Adjusting $K_1$ in BM25 doesn't give us significant increase in NDCG score. We tried 1, 1.5, 2, 2.5, and 3, they all give us similar scores. The highest is $85.60\%$ while the lowest is $85.56\%$.
     \item Use raw PageRank or log(PageRank). The NDCG results are similar so we use raw PageRank for simplicity.
 \end{itemize}
 
@@ -121,7 +127,7 @@ NDCG on train and dev datasets:
 
 We experiment with three suggested features first. As we can see bm25 is the most important feature. Only using bm25 can boost performance by $1\%$. Smallest window is not a very appealing feature. (In PA3 smallest window also provides marginal performance boost.)
 
-As Non-linear SVM requires grid search, we only use linear SVM to report NDCG scores.
+As Non-linear SVM requires grid search, we only report NDCG scores with linear SVMs.
 
 \begin{table}[!htb]
   \centering
@@ -130,22 +136,22 @@ As Non-linear SVM requires grid search, we only use linear SVM to report NDCG sc
     \multirow{2}{*}{bm25} & \multirow{2}{*}{window} & \multirow{2}{*}{pagerank} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
                           & & & train & dev & train & dev \\ \cline{4-7}
     \hline
-    \checkmark & & & 87.16 & 85.57 & - & - \\
+    \checkmark & & & 0.8716 & 0.8557 & - & - \\
     \hline
-    & \checkmark & & 86.53 & 84.62 & - & - \\
+    & \checkmark & & 0.8653 & 0.8462 & - & - \\
     \hline
-    & & \checkmark & 87.36 & 85.22 & - & - \\
+    & & \checkmark & 0.8736 & 0.8522 & - & - \\
     \hline
-    \checkmark & \checkmark & & 87.16 & 85.53 & - & - \\
+    \checkmark & \checkmark & & 0.8716 & 0.8553 & - & - \\
     \hline
-    & \checkmark & \checkmark & 87.37 & 85.16 & - & - \\
+    & \checkmark & \checkmark & 0.8737 & 0.8516 & - & - \\
     \hline
-    \checkmark & & \checkmark & 87.06 & 85.56 & - & - \\
+    \checkmark & & \checkmark & 0.8706 & 0.8556 & - & - \\
     \hline
-    \checkmark & \checkmark & \checkmark & 87.06 & 85.56 & 86.55 & 84.43\\
+    \checkmark & \checkmark & \checkmark & 0.8706 & 0.8556 & 0.8655 & 0.8443\\
     \hline
   \end{tabular}
-  \caption{Results for task 3 - basic requirement}
+  \caption{Results for task 3 - NDCG with different feature combinations}
 \end{table}
 
 \subsection{Systematic Errors}
@@ -155,10 +161,10 @@ After experimenting with three suggested features, we found three types of syste
 \begin{enumerate}
   \item Our system favors long urls that have higher term count.
     \begin{itemize}
-      \item For query "mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first url is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take url length into consideration by adding a new numeric feature.
+      \item For query ``mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first url is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take url length into consideration by adding a new numeric feature.
     \end{itemize}
-  \item Our system gives ".pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ".pdf".
-  \item Our system doesn't take current time into consideration. If user searches for 2014 academic calendar, we should give 2012-2013 academic calendar a high score. We don't add this one as a new feature and it would potentially raise our NDCG score.
+  \item Our system gives ``.pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ``.pdf".
+  \item Our system doesn't take current time into consideration. For example, if user searches for 2014 academic calendar, we should give 2012-2013 academic calendar a high score. However, we don't add this one as a new feature because it's relatively hard to previsely extract.
 \end{enumerate}
 
 \subsection{More features}
@@ -166,14 +172,14 @@ After experimenting with three suggested features, we found three types of syste
 We took three additional features into consideration:
 
 \begin{enumerate}
-    \item Number of fields that query words appear in.
-    \item Url length.
+    \item Number of fields where any query word appear.
+    \item URL length.
     \item Body length.
 \end{enumerate}
 
-\textbf{Number of fields that query words appear in} is a extremely useful feature and boost our performance a lot. Basically, it assumes that if all five fields contains query words, the document may be better.
+\textbf{Number of fields where any query word appear} is an extremely useful feature and boost our performance a lot. Basically, it assumes that if all five fields contains query words, the document may be better.
 
-\textbf{Url length} makes sense because shorter url tends to be better based on our observation. For example, two urls are \url{http://nlp.stanford.edu/manning/tex/} and \url{http://nlp.stanford.edu/manning/tex/avm.sty} and the query is christopher manning latex macros, the former urls is shorter than the latter while the former contains all the key word of the latter. The latter may be more specific and contains less information of our information need.
+\textbf{URL length} makes sense because shorter url tends to be better based on our observation. For example, two urls are \url{http://nlp.stanford.edu/manning/tex/} and \url{http://nlp.stanford.edu/manning/tex/avm.sty} and the query is \texttt{christopher manning latex macros}, the former urls is shorter than the latter while the former contains all the key word of the latter. The latter may be more specific and contains less information of our information need.
 
 Considering \textbf{Body length} is reasonable because if one document has long body length but has the same body hits as a shorter document, the shorter document tends to be more relevant than the longer document.
 
@@ -192,7 +198,7 @@ NDCG on train and dev datasets (numbers in parentheses are improvement over Task
         \hline
         & \textbf{Train} & \textbf {Dev.} \\
         \hline
-        \textbf{NuSVR} & 0.8669 (-0.42\%) & 0.8483 (0.75\%) \\
+        \textbf{NuSVR} & 0.8669 (-0.42\%) & \textbf{0.8483} (0.75\%) \\
         \hline
         \textbf{NuSVR w/ Std.} & 0.8770 (0.74\%) & 0.8328 (-1.09\%) \\
         \hline
