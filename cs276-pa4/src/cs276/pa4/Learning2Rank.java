@@ -24,12 +24,7 @@ public class Learning2Rank {
         } else if (task == 3) {
             learner = new NonLinearEnhancedSVMLearner();
         } else if (task == 4) {
-			
-			/* 
-			 * @TODO: Your code here, extra credit 
-			 * */
-            System.err.println("Extra credit");
-
+            learner = new SVRLearner();
         }
  		
 		/* Step (1): construct your feature matrix here */
@@ -52,12 +47,7 @@ public class Learning2Rank {
         } else if (task == 3) {
             learner = new NonLinearEnhancedSVMLearner(true);
         } else if (task == 4) {
-				
-				/* 
-				 * @TODO: Your code here, extra credit 
-				 * */
-            System.err.println("Extra credit");
-
+            learner = new SVRLearner();
         }
 		 
 	 		/* Step (1): construct your test feature matrix here */

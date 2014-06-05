@@ -26,7 +26,7 @@ public class PointwiseLearner extends LinearLearner {
         return score2.compareTo(score1);
     }
 
-    private double getScore(Classifier model, Instance inst) {
+    protected static double getScore(Classifier model, Instance inst) {
         double score = 0;
         try {
             score = model.classifyInstance(inst);
