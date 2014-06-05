@@ -66,28 +66,85 @@ For Linear SVM, we used default parameters. For RBF SVM, we used $C=8.0,\gamma=0
 \section{Task 3 - More Features and Error Analysis}
 
 \begin{table}[!htb]
+    \centering
+    \begin{tabular}{| r | l | l |}
+        \hline
+        & \textbf{Train} & \textbf {Dev.} \\
+        \hline
+        \textbf{RBF} & \textbf{TODO} & 0.8619 \\
+        \hline
+    \end{tabular}
+    \caption{NDCG on Task 3}
+\end{table}
+
+\subsection{Implementation Decisions}
+
+\begin{itemize}
+    \item Use BM25 with pagerank. BM25 weights are copied from PA3. Use BM25 without PageRank give as lower score $85.23\%$ compared to $85.56\%$ using PageRank.
+    \item Adjusting $K1$ in BM25 doesn't give us significant increase in NDCG score. We tried 1, 1.5, 2, 2.5, and 3, they all give us similar scores. The highest is $85.60\%$ while the lowest is $85.56\%$.
+    \item Use raw PageRank or log(PageRank). The NDCG results are similar so we use raw PageRank for simplicity.
+\end{itemize}
+
+\subsection{Combination of suggested features}
+
+We experiment with three suggested features first. As we can see bm25 is the most important feature. Only using bm25 can boost performance by $1\%$. Smallest window is not a very appealing feature. (In PA3 smallest window also provides marginal performance boost.)
+
+As Non-linear SVM requires grid search, we only use linear SVM to report NDCG scores.
+
+\begin{table}[!htb]
   \centering
   \begin{tabular}{|c|c|c|c|c|c|c|}
     \hline
     \multirow{2}{*}{bm25} & \multirow{2}{*}{window} & \multirow{2}{*}{pagerank} & \multicolumn{2}{c|}{Linear SVM} & \multicolumn{2}{c|}{Non-linear SVM} \\ \cline{4-7}
                           & & & train & dev & train & dev \\ \cline{4-7}
     \hline
-    \checkmark & & & 87.16 & 85.57 & & \\
+    \checkmark & & & 87.16 & 85.57 & - & - \\
     \hline
-    & \checkmark & & 86.53 & 84.62 & & \\
+    & \checkmark & & 86.53 & 84.62 & - & - \\
     \hline
-    & & \checkmark & 87.36 & 85.22 & & \\
+    & & \checkmark & 87.36 & 85.22 & - & - \\
     \hline
-    \checkmark & \checkmark & & 87.16 & 85.53 & & \\
+    \checkmark & \checkmark & & 87.16 & 85.53 & - & - \\
     \hline
-    & \checkmark & \checkmark & 87.37 & 85.16 & & \\
+    & \checkmark & \checkmark & 87.37 & 85.16 & - & - \\
     \hline
-    \checkmark & & \checkmark & 87.06 & 85.56 & & \\
+    \checkmark & & \checkmark & 87.06 & 85.56 & - & - \\
     \hline
-    \checkmark & \checkmark & \checkmark & 86.53 & 84.63 & & \\
+    \checkmark & \checkmark & \checkmark & 87.06 & 85.56 & 86.55 & 84.43\\
     \hline
   \end{tabular}
-  \caption{Results for task 3}
+  \caption{Results for task 3 - basic requirement}
 \end{table}
+
+\subsection{Systematic Errors}
+
+After experimenting with three suggested features, we found three types of systematic errors.
+
+\begin{enumerate}
+  \item Our system favors long urls that have higher term count.
+    \begin{itemize}
+      \item For query "mscs program sheet", our system ranks \url{http://cs.stanford.edu/degrees/mscs/programsheets/09-10/MSCS-0910-RWC.pdf} the highest and \url{http://cs.stanford.edu/degrees/mscs/programsheets/} only ranks the 4th. The first url is more specific and contains information about RWC track and it is for 09-10 academic years. The first link is too specific while the second one is just right. Hence, we take url length into consideration by adding a new numeric feature.
+    \end{itemize}
+  \item Our system gives ".pdf" file pretty low score. Thus we add a binary feature to indicate whether a document name ends with ".pdf".
+  \item Our system doesn't take current time into consideration. If user searches for 2014 academic calendar, we should give 2012-2013 academic calendar a high score. We don't add this one as a new feature and it would potentially raise our NDCG score.
+\end{enumerate}
+
+\subsection{More features}
+
+We took three additional features into consideration:
+
+\begin{enumerate}
+    \item Number of fields that query words appear in.
+    \item Url length.
+    \item Body length.
+\end{enumerate}
+
+\textbf{Number of fields that query words appear in} is a extremely useful feature and boost our performance a lot. Basically, it assumes that if all five fields contains query words, the document may be better.
+
+\textbf{Url length} makes sense because shorter url tends to be better based on our observation. For example, two urls are \url{http://nlp.stanford.edu/manning/tex/} and \url{http://nlp.stanford.edu/manning/tex/avm.sty} and the query is christopher manning latex macros, the former urls is shorter than the latter while the former contains all the key word of the latter. The latter may be more specific and contains less information of our information need.
+
+Considering \textbf{Body length} is reasonable because if one document has long body length but has the same body hits as a shorter document, the shorter document tends to be more relevant than the longer document.
+
+However, based on our experiment, not all three features are useful.
 
 \end{document}
